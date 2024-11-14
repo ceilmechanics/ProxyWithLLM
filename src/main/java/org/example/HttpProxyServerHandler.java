@@ -5,6 +5,7 @@ import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 
 public class HttpProxyServerHandler extends ChannelInboundHandlerAdapter {
 
@@ -16,146 +17,70 @@ public class HttpProxyServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
-            String host = request.headers().get("host");
-            String[] hostInfo = host.split(":");
+            String hostStr = request.headers().get("host");
+            String[] hostInfo = hostStr.split(":");
 
             // processing host & port
-            int port = 80;
+            port = 80;
             if (hostInfo.length > 1) {
                 port = Integer.parseInt(hostInfo[1]);
             }
             else if (request.uri().indexOf("https") == 0){
                 port = 443;
             }
-            this.host = hostInfo[0];
-            this.port = port;
+            host = hostInfo[0];
 
             if ("CONNECT".equalsIgnoreCase(request.method().name())) {
-                System.out.println("ProxyServerHandler >>>> CONNECT request received.");
+                System.out.println("ProxyServerHandler >>>> CONNECTION from " + ctx.channel().remoteAddress());
 
-                // created a ssl secure connection
+                // created a ssl secure connection on ProxyServer side
                 SslContext sslCtx = SslContextBuilder.forServer(
                         Certificate.getInstance().getServerPrivateKey(),
-                        Certificate.getInstance().getCertificate(this.host)
+                        Certificate.getInstance().getCertificate(host)
                 ).build();
 
-                //
-                Bootstrap bootstrap = new Bootstrap();
-                bootstrap.group(ctx.channel().eventLoop()) // register thread pool
-                        .channel(ctx.channel().getClass())
-                        .handler(new ChannelInitializer<Channel>() {
+                // Send back a 200 Connection Established response
+                FullHttpResponse response = new DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1,
+                        HttpResponseStatus.OK
+                );
+                ctx.writeAndFlush(response);
 
-                            @Override
-                            protected void initChannel(Channel ch) throws Exception {
-                                ChannelPipeline pipeline = ch.pipeline();
+                // Remove existing HTTP handlers
+                ctx.pipeline().remove("httpRequestDecoder");
+                ctx.pipeline().remove("httpResponseEncoder");
+                ctx.pipeline().remove("httpAggregator");
+                ctx.pipeline().remove(this);  // Remove the current handler
 
-                                // Add SSL handler to the pipeline to initiate the handshake
-                                pipeline.addLast(sslCtx.newHandler(ch.alloc()));
-                                pipeline.addLast("httpCodec", new HttpClientCodec());
-                                pipeline.addLast("httpObject", new HttpObjectAggregator(65536));
-                                pipeline.addLast("httpProxyClient", new HttpProxyServerHandler());
+                // Add SSL handler first
+                ctx.pipeline().addFirst("ssl", sslCtx.newHandler(ctx.alloc()));
+
+                // Wait for SSL handshake to complete
+                ctx.pipeline().addLast("sslHandshakeHandler", new ChannelInboundHandlerAdapter() {
+                    @Override
+                    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+                        if (evt instanceof SslHandshakeCompletionEvent) {
+                            SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
+                            if (event.isSuccess()) {
+                                // SSL handshake completed successfully, now add HTTP handlers
+                                ctx.pipeline().remove(this);  // Remove this temporary handler
+
+                                // Add HTTP handlers for decoding HTTPS traffic
+                                ctx.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
+                                ctx.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
+                                ctx.pipeline().addLast("httpAggregator", new HttpObjectAggregator(65536));
+                                ctx.pipeline().addLast("httpsRequestHandler", new httpsRequestHandler(host, port));
+
+                                System.out.println("SSL Handshake completed. Pipeline ready for HTTPS traffic.");
+                            } else {
+                                System.err.println("SSL Handshake failed: " + event.cause());
+                                ctx.close();
                             }
-                        });
-
-//                cf = bootstrap.connect(this.host, this.port);
-//                cf.addListener((ChannelFutureListener) future -> {
-//                    if (future.isSuccess()) {
-//                        future.channel().writeAndFlush(msg);
-//                        logger.debug("[HttpsProxyHandler][sendToServer]目标连接创建成功，并已转发了数据包");
-//                    } else {
-//                        logger.error("[HttpsProxyHandler][sendToServer]连接远程server失败");
-//                    }
-//                });
-
-                cf = bootstrap.connect(host, port);
-                cf.addListener(new ChannelFutureListener() {
-                    public void operationComplete(ChannelFuture future) throws Exception {
-                        if (future.isSuccess()) {
-                            System.out.println("https cfListener >>>> connection with server established, writing to the target server...");
-                            future.channel().writeAndFlush(msg);
-                        } else {
-                            ctx.channel().close();
                         }
+                        super.userEventTriggered(ctx, evt);
                     }
                 });
-
-
-                // proxy will server as a tunnel, response with 200
-//                HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-//                ctx.writeAndFlush(response);
-//                ctx.pipeline().remove("httpCodec");
-//                ctx.pipeline().remove("httpObject");
             }
-            else if ("GET".equalsIgnoreCase(request.method().name())) {
-                System.out.println("http (without s) >>>> GET request received.");
-            }
-//            else if ("GET".equalsIgnoreCase(request.method().name())){
-//                System.out.println("ProxyServerHandler >>>> GET request received.");
-//
-//                // Proxy, as a client, talks to the real server
-//                Bootstrap bootstrap = new Bootstrap();
-//                bootstrap.group(ctx.channel().eventLoop()) // register thread pool
-//                        .channel(ctx.channel().getClass())
-//                        .handler(new HttpProxyInitializer(ctx.channel()));
-//
-//                ChannelFuture httpcf = bootstrap.connect(host, port);
-//                httpcf.addListener(new ChannelFutureListener() {
-//                    public void operationComplete(ChannelFuture future) throws Exception {
-//                        if (future.isSuccess()) {
-//                            System.out.println("http cfListener >>>> connection with server established, writing to the target server...");
-//                            future.channel().writeAndFlush(msg);
-//                        } else {
-//                            ctx.channel().close();
-//                        }
-//                    }
-//                });
-//            }
-//            else {
-//                // it is not a GET request, close connection
-//                System.out.println("ProxyServerHandler >>>> invalid request method: " + request.method().name());
-//                ctx.channel().close();
-//            }
-//        }
-//        // private key only exists on client side & real server
-//        // therefore, what proxy can do at this moment is actually forward client data to server
-//        // and send server's data back to client
-//        else {
-//            if (cf == null) {
-//                // build a connection
-//                Bootstrap bootstrap = new Bootstrap();
-//                bootstrap.group(ctx.channel().eventLoop())
-//                        .channel(ctx.channel().getClass())
-//                        .handler(new ChannelInitializer() {
-//
-//                            @Override
-//                            protected void initChannel(Channel ch) throws Exception {
-//                                ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-//                                    @Override
-//                                    public void channelRead(ChannelHandlerContext ctx0, Object msg) throws Exception {
-//                                        System.out.println("HTTPS >>>> forwarding server's response back to client " +
-//                                                ctx.channel().remoteAddress());
-//                                        ctx.channel().writeAndFlush(msg);
-//                                    }
-//                                });
-//                            }
-//                        });
-//                cf = bootstrap.connect(host, port);
-//                cf.addListener(new ChannelFutureListener() {
-//                    public void operationComplete(ChannelFuture future) throws Exception {
-//                        if (future.isSuccess()) {
-//                            System.out.println("HTTPS created cf successfully >>>> writing to " + future.channel().remoteAddress());
-//                            future.channel().writeAndFlush(msg);
-//                        } else {
-//                            ctx.channel().close();
-//                        }
-//                    }
-//                });
-//            }
-//
-//            else {
-//                System.out.println("HTTPS cf already exists >>>> writing to " + cf.channel().remoteAddress());
-//                cf.channel().writeAndFlush(msg);
-//            }
         }
     }
 

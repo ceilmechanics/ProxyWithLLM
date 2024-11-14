@@ -16,6 +16,7 @@ public class HttpProxyInitializer extends ChannelInitializer {
     @Override
     protected void initChannel(Channel ch) throws Exception {
         System.out.println("Initializing channel...");
+
         ch.pipeline().addLast(new HttpClientCodec());
         ch.pipeline().addLast(new HttpObjectAggregator(6553600));
         ch.pipeline().addLast(new HttpProxyClientHandle(clientChannel));

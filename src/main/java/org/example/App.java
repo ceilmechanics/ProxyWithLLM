@@ -5,11 +5,12 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpRequestDecoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import io.netty.handler.proxy.HttpProxyHandler;
 
 import java.security.*;
 
@@ -23,16 +24,6 @@ public class App {
     }
 
     public void driver(int listenPort) throws NoSuchAlgorithmException, NoSuchProviderException {
-        // register bouncyCastle
-        Security.addProvider(new BouncyCastleProvider());
-        // 生成ssl证书公钥和私钥
-        KeyPairGenerator caKeyPairGen = KeyPairGenerator.getInstance("RSA", "BC");
-        caKeyPairGen.initialize(2048, new SecureRandom());
-        KeyPair keyPair = caKeyPairGen.generateKeyPair();
-        PrivateKey serverPriKey = keyPair.getPrivate();
-        PublicKey serverPubKey = keyPair.getPublic();
-
-
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(2);
         try {
@@ -46,9 +37,10 @@ public class App {
 
                         @Override
                         protected void initChannel(Channel ch) throws Exception {
-                            ch.pipeline().addLast("httpCodec",new HttpServerCodec());
-                            ch.pipeline().addLast("httpObject",new HttpObjectAggregator(65536));
-                            ch.pipeline().addLast("httpProxyServer",new HttpProxyServerHandler());
+                            ch.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
+                            ch.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
+                            ch.pipeline().addLast("httpAggregator", new HttpObjectAggregator(65536));
+                            ch.pipeline().addLast("httpProxyServer", new HttpProxyServerHandler());
                         }
                     });
             System.out.println("driver >>>> proxy server start on port " + listenPort);
