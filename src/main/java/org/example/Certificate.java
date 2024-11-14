@@ -32,7 +32,7 @@ public class Certificate {
 
     private static Certificate instance;
 
-    private Map<String, X509Certificate> cache = new HashMap<>();
+    private final Map<String, X509Certificate> cache = new HashMap<>();
     private String issuer;
     private KeyFactory keyFactory;
     private PrivateKey caPriKey;

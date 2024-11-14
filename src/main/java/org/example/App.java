@@ -7,10 +7,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.proxy.HttpProxyHandler;
 
 import java.security.*;
 
@@ -18,12 +16,12 @@ public class App {
     public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException {
         int port = 6667;
         if (args.length > 0) {
-            port = Integer.valueOf(args[0]);
+            port = Integer.parseInt(args[0]);
         }
         new App().driver(port);
     }
 
-    public void driver(int listenPort) throws NoSuchAlgorithmException, NoSuchProviderException {
+    public void driver(int listenPort) {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(2);
         try {
@@ -36,7 +34,7 @@ public class App {
                     .childHandler(new ChannelInitializer<Channel>() {
 
                         @Override
-                        protected void initChannel(Channel ch) throws Exception {
+                        protected void initChannel(Channel ch) {
                             ch.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
                             ch.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
                             ch.pipeline().addLast("httpAggregator", new HttpObjectAggregator(65536));

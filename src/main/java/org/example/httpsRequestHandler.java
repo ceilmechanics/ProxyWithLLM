@@ -17,10 +17,10 @@ public class httpsRequestHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
+    public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest request = (FullHttpRequest) msg;
-            System.out.println("processing https request... \n" + request.toString());
+            System.out.println("processing https request... \n" + request);
 
             if ("GET".equalsIgnoreCase(request.method().name())) {
                 System.out.println("GET request from " + ctx.channel().remoteAddress());

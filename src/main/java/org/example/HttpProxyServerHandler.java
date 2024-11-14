@@ -1,6 +1,5 @@
 package org.example;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslContext;
@@ -9,7 +8,6 @@ import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 
 public class HttpProxyServerHandler extends ChannelInboundHandlerAdapter {
 
-    private ChannelFuture cf;
     private String host;
     private int port;
 
