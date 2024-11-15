@@ -33,43 +33,36 @@ public class Certificate {
     private static Certificate instance;
 
     private final Map<String, X509Certificate> cache = new HashMap<>();
-    private String issuer;
-    private KeyFactory keyFactory;
-    private PrivateKey caPriKey;
-    private Date notBeforeDate;
-    private Date notAfterDate;
-    private PublicKey serverPublicKey;
-    private PrivateKey serverPrivateKey;
-    private SslContext sslCtx;
+    private final String issuer;
+    private final KeyFactory keyFactory;
+    private final PrivateKey caPriKey;
+    private final Date notBeforeDate;
+    private final Date notAfterDate;
+    private final PublicKey serverPublicKey;
+    private final PrivateKey serverPrivateKey;
+    private final SslContext sslCtx;
 
-    public static Certificate getInstance() throws Exception {
+    public static Certificate theCertificate() throws Exception {
         if (instance == null) {
             instance = new Certificate();
         }
         return instance;
     }
 
-    private Certificate() throws Exception {
-        init();
-    }
-
-    public void init() throws Exception {
+    public Certificate() throws Exception {
         // create a keyFactory instance to handle RSA keys, which will be used later to create or manipulate keys
         this.keyFactory = KeyFactory.getInstance("RSA");
 
         // configures the SSL context for the client side
         // effectively disables certificate verification, allowing client to trust all server certificates
         // regardless of their authenticity
-        // we've uploaded the root certificate in browser, do not need this any more
         this.sslCtx = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
 
         // load certificate from src/main/resources/
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         X509Certificate caCert = (X509Certificate) CertificateFactory
                 .getInstance("X.509")
-                .generateCertificate(
-                        cl.getResourceAsStream("ca.crt")
-                );
+                .generateCertificate(cl.getResourceAsStream("ca.crt"));
 
         this.caPriKey = retrievePrivateKey(Objects.requireNonNull(cl.getResourceAsStream("ca_private.der")));
         this.issuer = retrieveIssuer(caCert);

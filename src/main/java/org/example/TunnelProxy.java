@@ -1,16 +1,21 @@
-//package org.example;
+package org.example;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.*;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 //
-//import io.netty.bootstrap.Bootstrap;
-//import io.netty.channel.*;
-//import io.netty.handler.codec.http.*;
-//import io.netty.handler.ssl.SslContext;
-//import io.netty.handler.ssl.SslContextBuilder;
-//
-//public class TunnelProxy extends ChannelInboundHandlerAdapter {
-//
-//    private ChannelFuture cf;
-//    private String host;
-//    private int port;
+public class TunnelProxy extends ChannelInboundHandlerAdapter {
+
+    private ChannelFuture cf;
+    private String host;
+    private int serverPort;
+    private int port;
+
+    public TunnelProxy(int port) {
+        serverPort = port;
+    }
 //
 //    @Override
 //    public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
@@ -35,8 +40,8 @@
 //
 //                // SSL handshake, establishing a secure connection
 //                SslContext sslCtx = SslContextBuilder.forServer(
-//                        Certificate.getInstance().getServerPrivateKey(),
-//                        Certificate.getInstance().getCertificate(this.host)
+//                        Certificate.theCertificate().getServerPrivateKey(),
+//                        Certificate.theCertificate().getCertificate(this.host)
 //                ).build();
 //
 //                // proxy will server as a tunnel, response with 200
@@ -115,4 +120,4 @@
 //        }
 //    }
 //
-//}
+}

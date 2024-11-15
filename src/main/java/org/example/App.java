@@ -10,20 +10,24 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
-import java.security.*;
-
 public class App {
-    public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException {
-        int port = 6667;
+    private static String mode = "ssl";
+    private static final int port = 6667;
+
+    public static void main(String[] args) {
         if (args.length > 0) {
-            port = Integer.parseInt(args[0]);
+            mode = args[0];
         }
-        new App().driver(port);
+
+        if (mode.equals("tunnel")) {
+            new TunnelProxy(port);
+        }
+        new App().sslDriver();
     }
 
-    public void driver(int listenPort) {
+    public void sslDriver() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup(2);
+        EventLoopGroup workerGroup = new NioEventLoopGroup(10);
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
@@ -41,12 +45,15 @@ public class App {
                             ch.pipeline().addLast("httpProxyServer", new HttpProxyServerHandler());
                         }
                     });
-            System.out.println("driver >>>> proxy server start on port " + listenPort);
-            ChannelFuture f = b.bind(listenPort).sync();
+
+            System.out.println("ProxyUsingSslConnection >>>> starting on port " + port);
+
+            ChannelFuture f = b.bind(port).sync();
             f.channel().closeFuture().sync();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            // clean up
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }

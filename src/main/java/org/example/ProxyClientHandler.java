@@ -8,10 +8,10 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.*;
 import io.netty.util.ReferenceCountUtil;
 
-public class HttpProxyClientHandle extends ChannelInboundHandlerAdapter {
+public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
     private final Channel clientChannel;
 
-    public HttpProxyClientHandle(Channel clientChannel) {
+    public ProxyClientHandler(Channel clientChannel) {
         this.clientChannel = clientChannel;
     }
 
@@ -26,12 +26,26 @@ public class HttpProxyClientHandle extends ChannelInboundHandlerAdapter {
 
             if (msg instanceof HttpResponse) {
                 HttpResponse response = (HttpResponse) msg;
-                // Ensure proper headers for chunked responses
+                // Preserve chunked encoding if present
                 if (HttpUtil.isTransferEncodingChunked(response)) {
                     response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
                     response.headers().remove(HttpHeaderNames.CONTENT_LENGTH);
                 }
-                response.headers().set("test", "my proxy");
+
+                // Preserve content encoding
+                if (response.headers().contains(HttpHeaderNames.CONTENT_ENCODING)) {
+                    String encoding = response.headers().get(HttpHeaderNames.CONTENT_ENCODING);
+                    response.headers().set(HttpHeaderNames.CONTENT_ENCODING, encoding);
+                }
+
+                // Handle range responses
+                if (response.headers().contains(HttpHeaderNames.CONTENT_RANGE)) {
+                    String range = response.headers().get(HttpHeaderNames.CONTENT_RANGE);
+                    response.headers().set(HttpHeaderNames.CONTENT_RANGE, range);
+                }
+
+                // Modify the response header
+//                response.headers().set("guess what???", "from my proxy:)");
             }
 
             clientChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
@@ -40,8 +54,8 @@ public class HttpProxyClientHandle extends ChannelInboundHandlerAdapter {
                     closeOnFlush(ctx.channel());
                 }
             });
-
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
             ReferenceCountUtil.release(msg);
             closeOnFlush(ctx.channel());
