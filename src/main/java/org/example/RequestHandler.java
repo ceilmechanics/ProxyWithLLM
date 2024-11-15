@@ -7,23 +7,24 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
-public class httpRequestHandler extends ChannelInboundHandlerAdapter {
+public class RequestHandler extends ChannelInboundHandlerAdapter {
     private final String host;
     private final int port;
     private final boolean isHttps;
     private Channel outboundChannel;
 
-    public httpRequestHandler(String host, int port, boolean isHttps) {
+    public RequestHandler(String host, int port, boolean isHttps) {
         this.host = host;
         this.port = port;
         this.isHttps = isHttps;
     }
 
     @Override
-    public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
+    public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
         if (msg instanceof FullHttpRequest) {
             handleHttpRequest(ctx, (FullHttpRequest) msg);
-        } else if (msg instanceof WebSocketFrame) {
+        }
+        else if (msg instanceof WebSocketFrame) {
             if (outboundChannel != null && outboundChannel.isActive()) {
                 outboundChannel.writeAndFlush(msg);
             }

@@ -45,7 +45,7 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
                 }
 
                 // Modify the response header
-//                response.headers().set("guess what???", "from my proxy:)");
+                response.headers().set("test", "from my proxy:)");
             }
 
             clientChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {

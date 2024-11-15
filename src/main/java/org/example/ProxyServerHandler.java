@@ -6,11 +6,10 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 
-public class HttpProxyServerHandler extends ChannelInboundHandlerAdapter {
+public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
 
     private String host;
     private int port;
-    private boolean isHttps;
 
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) throws Exception {
@@ -28,13 +27,13 @@ public class HttpProxyServerHandler extends ChannelInboundHandlerAdapter {
                 port = 443;
             }
             host = hostInfo[0];
-            isHttps = request.uri().startsWith("https") || "CONNECT".equalsIgnoreCase(request.method().name());
+            boolean isHttps = request.uri().startsWith("https") || "CONNECT".equalsIgnoreCase(request.method().name());
 
             if ("CONNECT".equalsIgnoreCase(request.method().name())) {
                 handleConnectRequest(ctx, request);
             } else {
                 // For HTTP requests, directly handle without pipeline modification
-                httpRequestHandler handler = new httpRequestHandler(host, port, isHttps);
+                RequestHandler handler = new RequestHandler(host, port, isHttps);
                 try {
                     handler.channelRead(ctx, request);
                 } finally {
@@ -94,7 +93,7 @@ public class HttpProxyServerHandler extends ChannelInboundHandlerAdapter {
         ctx.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
         ctx.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
         ctx.pipeline().addLast("httpAggregator", new HttpObjectAggregator(10 * 1024 * 1024));
-        ctx.pipeline().addLast("proxyHandler", new httpRequestHandler(host, port, true));
+        ctx.pipeline().addLast("proxyHandler", new RequestHandler(host, port, true));
     }
 
     @Override

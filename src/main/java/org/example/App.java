@@ -27,7 +27,7 @@ public class App {
 
     public void sslDriver() {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup(10);
+        EventLoopGroup workerGroup = new NioEventLoopGroup(20);
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
@@ -42,7 +42,7 @@ public class App {
                             ch.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
                             ch.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
                             ch.pipeline().addLast("httpAggregator", new HttpObjectAggregator(65536));
-                            ch.pipeline().addLast("httpProxyServer", new HttpProxyServerHandler());
+                            ch.pipeline().addLast("httpProxyServer", new ProxyServerHandler());
                         }
                     });
 
