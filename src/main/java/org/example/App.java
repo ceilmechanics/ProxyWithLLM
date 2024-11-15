@@ -41,7 +41,7 @@ public class App {
                         protected void initChannel(Channel ch) {
                             ch.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
                             ch.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
-                            ch.pipeline().addLast("httpAggregator", new HttpObjectAggregator(65536));
+                            ch.pipeline().addLast("httpAggregator", new HttpObjectAggregator(10 * 1024 * 1024)); // 10MB
                             ch.pipeline().addLast("httpProxyServer", new ProxyServerHandler());
                         }
                     });
