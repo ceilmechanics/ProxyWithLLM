@@ -15,10 +15,12 @@ public class App {
     private static final int port = 6667;
 
     public static void main(String[] args) {
+        // our proxy will take only one argument, which is "tunnel"
         if (args.length > 0) {
             mode = args[0];
         }
 
+        // if "tunnel" is specified in the command line, it will run in "tunnel" mode
         if (mode.equals("tunnel")) {
             new TunnelProxy(port);
         }
@@ -26,6 +28,7 @@ public class App {
     }
 
     public void sslDriver() {
+        // threading to support multiple clients concurrently
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(20);
         try {

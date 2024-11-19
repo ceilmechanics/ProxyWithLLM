@@ -1,6 +1,5 @@
 package org.example;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -8,9 +7,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-//
+
 public class TunnelProxy extends ChannelInboundHandlerAdapter {
 
     private ChannelFuture cf;
@@ -56,7 +53,4 @@ public class TunnelProxy extends ChannelInboundHandlerAdapter {
             workerGroup.shutdownGracefully();
         }
     }
-
-
-
 }
