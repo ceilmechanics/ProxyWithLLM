@@ -11,7 +11,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 public class App {
-    private static String mode = "ssl";
+    private static String mode = "ssl"; // set SSL connection as default mode
     private static final int port = 6667;
 
     public static void main(String[] args) {
@@ -28,7 +28,10 @@ public class App {
     }
 
     public void sslDriver() {
-        // threading to support multiple clients concurrently
+        //  concurrency is supported by netty's event-driven architecture
+        //  The boss group accepts connections and distributes them to the worker group
+        //  The worker group (20 threads) handles multiple connections simultaneously
+        //  All operations are non-blocking
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup(20);
         try {
@@ -40,10 +43,16 @@ public class App {
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new ChannelInitializer<Channel>() {
 
+                        // pipeline processing is also non-blocking and event-driven
+                        // Inbound (Request) Flow:
+                        // [Client] -> HttpRequestDecoder -> HttpObjectAggregator -> ProxyServerHandler
+
+                        // Outbound (Response) Flow:
+                        // ProxyServerHandler -> HttpResponseEncoder -> [Client]
                         @Override
                         protected void initChannel(Channel ch) {
-                            ch.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
-                            ch.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
+                            ch.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder()); // bytes -> request
+                            ch.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder()); // responses -> bytes
                             ch.pipeline().addLast("httpAggregator", new HttpObjectAggregator(10 * 1024 * 1024)); // 10MB
                             ch.pipeline().addLast("httpProxyServer", new ProxyServerHandler());
                         }
@@ -53,9 +62,11 @@ public class App {
 
             ChannelFuture f = b.bind(port).sync();
             f.channel().closeFuture().sync();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
-        } finally {
+        }
+        finally {
             // clean up
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();

@@ -4,10 +4,14 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
 
 public class RequestHandler extends ChannelInboundHandlerAdapter {
+    private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
     private final String host;
     private final int port;
     private final boolean isHttps;
@@ -24,11 +28,11 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof FullHttpRequest) {
             handleHttpRequest(ctx, (FullHttpRequest) msg);
         }
-        else if (msg instanceof WebSocketFrame) {
-            if (outboundChannel != null && outboundChannel.isActive()) {
-                outboundChannel.writeAndFlush(msg);
-            }
-        }
+//        else if (msg instanceof WebSocketFrame) {
+//            if (outboundChannel != null && outboundChannel.isActive()) {
+//                outboundChannel.writeAndFlush(msg);
+//            }
+//        }
     }
 
     private void handleHttpRequest(final ChannelHandlerContext ctx, final FullHttpRequest request) {
@@ -89,11 +93,10 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         cf.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
                 outboundChannel = future.channel();
-                System.out.println("Connected to " + host + ":" + port);
+                System.out.println("Proxy as a client >>>> Connected to " + host + ":" + port);
                 future.channel().writeAndFlush(modifiedRequest);
             } else {
-                System.err.println("Failed to connect to " + host + ":" + port);
-                future.cause().printStackTrace();
+                System.err.println(" Proxy as a client >>>> Failed to connect to " + host + ":" + port);
                 ctx.close();
             }
         });
@@ -108,7 +111,7 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        log.error(Arrays.toString(cause.getStackTrace()));
         closeOnFlush(ctx.channel());
     }
 

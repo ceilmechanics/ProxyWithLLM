@@ -6,6 +6,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 
+import java.util.Arrays;
+
 public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
 
     private String host;
@@ -27,18 +29,17 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
                 port = 443;
             }
             host = hostInfo[0];
-            boolean isHttps = request.uri().startsWith("https") || "CONNECT".equalsIgnoreCase(request.method().name());
+//            boolean isHttps = request.uri().startsWith("https") || "CONNECT".equals(request.method().name());
 
-            if ("CONNECT".equalsIgnoreCase(request.method().name())) {
+            if ("CONNECT".equals(request.method().name())) {
                 handleConnectRequest(ctx, request);
-            } else {
+            }
+            else {
                 // For HTTP requests, directly handle without pipeline modification
-                RequestHandler handler = new RequestHandler(host, port, isHttps);
-                try {
-                    handler.channelRead(ctx, request);
-                } finally {
-                    request.release(); // Ensure request is released after processing
-                }
+                // HTTP requests do not require encode, so just forward whatever the real host sent back to you
+                RequestHandler handler = new RequestHandler(host, port, false);
+                handler.channelRead(ctx, request);
+                request.release(); // netty memory cleanup
             }
         }
     }
@@ -76,9 +77,14 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
                     SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
                     if (event.isSuccess()) {
                         ctx.pipeline().remove(this);
-                        setupProxyPipeline(ctx);
+                        ctx.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
+                        ctx.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
+                        ctx.pipeline().addLast("httpAggregator", new HttpObjectAggregator(10 * 1024 * 1024));
+                        ctx.pipeline().addLast("proxyHandler", new RequestHandler(host, port, true));
+
                         System.out.println("SSL Handshake completed. Pipeline ready for HTTPS traffic.");
-                    } else {
+                    }
+                    else {
                         System.err.println("SSL Handshake failed: " + event.cause());
                         ctx.close();
                     }
@@ -88,17 +94,9 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
         });
     }
 
-    private void setupProxyPipeline(ChannelHandlerContext ctx) {
-        // Add HTTP handlers for decoded traffic
-        ctx.pipeline().addLast("httpRequestDecoder", new HttpRequestDecoder());
-        ctx.pipeline().addLast("httpResponseEncoder", new HttpResponseEncoder());
-        ctx.pipeline().addLast("httpAggregator", new HttpObjectAggregator(10 * 1024 * 1024));
-        ctx.pipeline().addLast("proxyHandler", new RequestHandler(host, port, true));
-    }
-
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        System.err.println(Arrays.toString(cause.getStackTrace()));
         ctx.close();
     }
 }

@@ -97,7 +97,6 @@ public class Certificate {
     }
 
     private PrivateKey retrievePrivateKey(InputStream istream) throws IOException, InvalidKeySpecException {
-//         Using try-with-resources to ensure streams are closed automatically
         try (ByteArrayOutputStream ostream = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[1024];
             int length;
@@ -107,7 +106,8 @@ public class Certificate {
 
             // Generate and return the PrivateKey from the full byte array
             return keyFactory.generatePrivate(new PKCS8EncodedKeySpec(ostream.toByteArray()));
-        } finally {
+        }
+        finally {
             istream.close(); // Ensure input stream is closed if try-with-resources isn't possible
         }
     }

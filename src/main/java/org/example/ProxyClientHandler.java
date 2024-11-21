@@ -12,6 +12,8 @@ import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+
 public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
     private final Channel clientChannel;
     private HttpResponse currentResponse;
@@ -50,10 +52,6 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
                         response.status(),
                         response.protocolVersion(),
                         formatHeaders(response.headers()));
-
-//                logger.info("Headers:");
-//                response.headers().forEach(h ->
-//                        logger.info("\t{}: {}", h.getKey(), h.getValue()));
             }
 
             if (msg instanceof HttpContent) {
@@ -92,13 +90,13 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
 
             clientChannel.writeAndFlush(msg).addListener((ChannelFutureListener) future -> {
                 if (!future.isSuccess()) {
-                    future.cause().printStackTrace();
+                    System.err.println(Arrays.toString(future.cause().getStackTrace()));
                     closeOnFlush(ctx.channel());
                 }
             });
         }
         catch (Exception e) {
-            e.printStackTrace();
+            System.err.println(Arrays.toString(e.getStackTrace()));
             ReferenceCountUtil.release(msg);
             closeOnFlush(ctx.channel());
         }
@@ -122,7 +120,7 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        System.err.println(Arrays.toString(cause.getStackTrace()));
         closeOnFlush(ctx.channel());
     }
 
@@ -134,8 +132,7 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
 
     private String formatHeaders(HttpHeaders headers) {
         StringBuilder sb = new StringBuilder();
-        headers.forEach(h ->
-                sb.append(String.format("\t%s: %s\n", h.getKey(), h.getValue())));
+        headers.forEach(h -> sb.append(String.format("\t%s: %s\n", h.getKey(), h.getValue())));
         return sb.toString();
     }
 }
