@@ -10,8 +10,6 @@ import io.netty.handler.logging.LoggingHandler;
 
 public class TunnelProxy extends ChannelInboundHandlerAdapter {
 
-    private ChannelFuture cf;
-    private String host;
     private final int serverPort;
 
     public TunnelProxy(int port) {
