@@ -12,8 +12,7 @@ public class TunnelProxy extends ChannelInboundHandlerAdapter {
 
     private ChannelFuture cf;
     private String host;
-    private int serverPort;
-//    private int port;
+    private final int serverPort;
 
     public TunnelProxy(int port) {
         serverPort = port;

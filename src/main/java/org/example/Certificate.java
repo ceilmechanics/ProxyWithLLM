@@ -58,7 +58,7 @@ public class Certificate {
         // regardless of their authenticity
         this.sslCtx = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
 
-        // load certificate from src/main/resources/
+        // Loading the pre-generated root CA certificate from src/main/resources/
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         X509Certificate caCert = (X509Certificate) CertificateFactory
                 .getInstance("X.509")

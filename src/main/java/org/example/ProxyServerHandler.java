@@ -29,7 +29,6 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
                 port = 443;
             }
             host = hostInfo[0];
-//            boolean isHttps = request.uri().startsWith("https") || "CONNECT".equals(request.method().name());
 
             if ("CONNECT".equals(request.method().name())) {
                 handleConnectRequest(ctx, request);
@@ -45,7 +44,7 @@ public class ProxyServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void handleConnectRequest(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
-        System.out.println("ProxyServerHandler >>>> HTTPS CONNECT from " + ctx.channel().remoteAddress());
+        System.out.println("ProxyServerHandler >>>> https CONNECT from " + ctx.channel().remoteAddress());
 
         // created a ssl secure connection on ProxyServer side
         SslContext sslCtx = SslContextBuilder.forServer(

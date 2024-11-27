@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 
 public class RequestHandler extends ChannelInboundHandlerAdapter {
-    private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
     private final String host;
     private final int port;
     private final boolean isHttps;
@@ -28,23 +28,11 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof FullHttpRequest) {
             handleHttpRequest(ctx, (FullHttpRequest) msg);
         }
-//        else if (msg instanceof WebSocketFrame) {
-//            if (outboundChannel != null && outboundChannel.isActive()) {
-//                outboundChannel.writeAndFlush(msg);
-//            }
-//        }
     }
 
     private void handleHttpRequest(final ChannelHandlerContext ctx, final FullHttpRequest request) {
         // Clone and modify the request
         final FullHttpRequest modifiedRequest = request.copy();
-
-        // Modify URI for HTTP requests
-        if (!isHttps && request.uri().startsWith("http://")) {
-            String uri = request.uri();
-            uri = uri.substring(uri.indexOf("/", 7));
-            modifiedRequest.setUri(uri);
-        }
 
         // Preserve important headers
         modifiedRequest.headers().set(HttpHeaderNames.HOST, host);
@@ -65,6 +53,14 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         }
 
         if (outboundChannel != null && outboundChannel.isActive()) {
+            logger.info("\n" +
+                            "+-----------------------------------------+\n" +
+                            "|   forward client request to real host   |\n" +
+                            "+-----------------------------------------+\n" +
+                            "real host address: {} \n" +
+                            "{}",
+                    outboundChannel.remoteAddress(),
+                    modifiedRequest.headers());
             outboundChannel.writeAndFlush(modifiedRequest);
             return;
         }
@@ -94,6 +90,14 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
             if (future.isSuccess()) {
                 outboundChannel = future.channel();
                 System.out.println("Proxy as a client >>>> Connected to " + host + ":" + port);
+
+                logger.info("Proxy, as a client, is connected to {}:{}", host, port);
+                logger.info("\n" +
+                                "+-----------------------------------------+\n" +
+                                "|   forward client request to real host   |\n" +
+                                "+-----------------------------------------+\n" +
+                                "{}",
+                        modifiedRequest);
                 future.channel().writeAndFlush(modifiedRequest);
             } else {
                 System.err.println(" Proxy as a client >>>> Failed to connect to " + host + ":" + port);
@@ -111,7 +115,7 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error(Arrays.toString(cause.getStackTrace()));
+        logger.error(Arrays.toString(cause.getStackTrace()));
         closeOnFlush(ctx.channel());
     }
 
