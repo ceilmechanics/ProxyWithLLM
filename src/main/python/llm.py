@@ -39,16 +39,6 @@ def main():
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
-    #
-    # try:
-    #     with open("comments.txt", 'r') as file:
-    #         comments_content = file.read()
-    # except Exception as e:
-    #     print(f"An error occurred: {e}")
-    #     sys.exit(1)
-
-    title_content = extract_content(content, "<shreddit-post", "</shreddit-post")
-    # comment_content = extract_content(comments_content, "<shreddit-comment-tree", "</shreddit-comment-tree>")
 
     title_system = """Summarize the Reddit title content provided. You must strictly follow these guidelines:
             - **Do not apply any external knowledge**: Only summarize the content provided in the post, even if it contains incorrect or incomplete information.
@@ -62,7 +52,7 @@ def main():
     title_request = {
         'model': '4o-mini',
         'system': title_system,
-        'query': title_content,
+        'query': content,
         'temperature': 0.0,
         'lastk': 0,
         'session_id': "GenericSession",
@@ -72,10 +62,23 @@ def main():
         title_response = requests.post(url, headers=headers, json=title_request)
         title_response.raise_for_status()
 
-        print(f'\nTitle: {title_response.text}\n')
+        cleaned_response = json.loads(title_response.text)['result']
 
-        # title_cleaned_response = json.loads(json.loads(title_response.text)['result'])
-        # answer_cleaned_response = json.loads(json.loads(answer_response.text)['result'])
+        div_content = f'<div style="color: orangered;font-weight: 600;margin: 1rem;border: 1px solid black;padding: 10px;border-radius: 10px;background-color: lightgrey;">{cleaned_response}</div>'
+
+        position = content.find('<h1 id="post-title')
+
+        if position != -1:
+            f = open("title_div.txt", "w")
+            print(f"write")
+            f.write(div_content)
+            f.close()
+        else:
+            print("Error: <h1 id=\"post-title tag not found.")
+            sys.exit(1)
+
+
+
         #
         # print(f'\nTitle Question: {title_cleaned_response["question"]}')
         # print(f'Title Answer: {title_cleaned_response["answer"]}\n')
