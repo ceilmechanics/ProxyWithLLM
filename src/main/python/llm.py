@@ -23,46 +23,40 @@ def main():
     url = "https://a061igc186.execute-api.us-east-1.amazonaws.com/dev"
 
     # set your API key
-    x_api_key = ""
+    x_api_key = "comp112yPgr18pHejCorRftczvjnYjKNEG1M3LqOtethzi3"
 
     headers = {
         'x-api-key': x_api_key
     }
 
+    if len(sys.argv) != 2:
+        print("Usage: script.py <param1> <param2>")
+        sys.exit(1)
+
     try:
-        with open("query.txt", 'r') as file:
+        with open(sys.argv[1], 'r') as file:
             content = file.read()
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)
-
-    try:
-        with open("comments.txt", 'r') as file:
-            comments_content = file.read()
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        sys.exit(1)
+    #
+    # try:
+    #     with open("comments.txt", 'r') as file:
+    #         comments_content = file.read()
+    # except Exception as e:
+    #     print(f"An error occurred: {e}")
+    #     sys.exit(1)
 
     title_content = extract_content(content, "<shreddit-post", "</shreddit-post")
-    comment_content = extract_content(comments_content, "<shreddit-comment-tree", "</shreddit-comment-tree>")
+    # comment_content = extract_content(comments_content, "<shreddit-comment-tree", "</shreddit-comment-tree>")
 
     title_system = """Summarize the Reddit title content provided. You must strictly follow these guidelines:
             - **Do not apply any external knowledge**: Only summarize the content provided in the post, even if it contains incorrect or incomplete information.
             - **Question Summarization**:
                 - Focus on identifying the core inquiry or topic discussed in the post.
-                - The question should be at most **2 sentences long**.
+                - The question should be at most **3 sentences long**.
                 - Use clear and concise language that accurately represents the intent of the poster’s inquiry.
                 - If the question is implicit, infer the main query or issue the poster is addressing.
-            - Keep the language **clear and concise**, without being overly formal."""
-
-    answer_system = """Summarize the Reddit title content provided. You must strictly follow these guidelines:
-            - **Do not apply any external knowledge**: Only summarize the content provided in the post, even if it contains incorrect or incomplete information.
-            - **Answer Summarization**:
-                - The answer should focus on the **main ideas** and any **actionable insights**.
-                - Dedicate a sentence or two to summarize the **collective sentiment** of the group, as reflected in the responses or discussion.
-                - The answer should be at most **5 sentences long**.
-                - Avoid including personal opinions or analysis of the information; simply restate the content as it is.
-                - Ensure the tone is neutral, with no unnecessary elaboration.
             - Keep the language **clear and concise**, without being overly formal."""
 
     title_request = {
@@ -70,25 +64,13 @@ def main():
         'system': title_system,
         'query': title_content,
         'temperature': 0.0,
-        'lastk': 1,
-        'session_id': "GenericSession",
-    }
-
-    answer_request = {
-        'model': '4o-mini',
-        'system': answer_system,
-        'query': comment_content,
-        'temperature': 0.0,
-        'lastk': 1,
+        'lastk': 0,
         'session_id': "GenericSession",
     }
 
     try:
         title_response = requests.post(url, headers=headers, json=title_request)
-        # answer_response = requests.post(url, headers=headers, json=answer_request)
-
         title_response.raise_for_status()
-        # answer_response.raise_for_status()
 
         print(f'\nTitle: {title_response.text}\n')
 
@@ -107,5 +89,4 @@ def main():
         print(f"Error parsing response: {e}")
 
 if __name__ == '__main__':
-    print("hiiii")
-    # main()
+    main()

@@ -1,0 +1,179 @@
+<main class="main w-full flex-grid--main-container-card right-sidebar-xs" id="main-content">
+                <shreddit-title title="Looking for a long-term study partner : r/ProgrammingBuddies"></shreddit-title>
+                <shreddit-post class="block
+    xs:mt-xs xs:-mx-xs xs:px-xs xs:rounded-[16px] pt-xs nd:pt-xs bg-[color:var(--shreddit-content-background)] box-border mb-xs nd:visible nd:pb-2xl" permalink="/r/ProgrammingBuddies/comments/1h2wf68/looking_for_a_longterm_study_partner/" content-href="https://www.reddit.com/r/ProgrammingBuddies/comments/1h2wf68/looking_for_a_longterm_study_partner/" view-context="CommentsPage" vote-type="" comment-count="11" moderation-verdict="" previous-actions-feature user-id="t2_nw87cs8" show-full-content is-crosspostable is-embeddable is-desktop-viewport is-awardable user-logged-in created-timestamp="2024-11-29T21:32:13.507000+0000" domain="self.ProgrammingBuddies" id="t3_1h2wf68" post-title="Looking for a long-term study partner" post-language="en" post-type="text" score="11" subreddit-id="t5_2zp55" subreddit-prefixed-name="r/ProgrammingBuddies" author-id="t2_vgoj4x77" author="heleskey" icon="https://www.redditstatic.com/avatars/defaults/v2/avatar_default_3.png" data-expected-lcp>
+                    <div slot="credit-bar" class="flex justify-between text-12 pt-md pb-2xs px-md relative xs:px-0">
+                        <span class="flex gap-xs items-center pr-xs truncate">
+                            <pdp-back-button class="hidden xs:block w-[32px] h-[32px] pdp-float-back-btn:absolute pdp-float-back-btn:top-md pdp-float-back-btn:-left-[2.5rem]" post-id="t3_1h2wf68" subreddit-prefixed-name="r/ProgrammingBuddies"></pdp-back-button>
+                            <span class="avatar text-32 items-center overflow-hidden flex-shrink-0 indent-0 w-xl h-xl">
+                                <faceplate-tracker source="post_credit_bar" action="click" noun="community" class="visible">
+                                    <a href="/r/ProgrammingBuddies/" class="no-underline hover:no-underline active:no-underline text-secondary">
+                                        <div class="h-[32px] w-[32px]">
+                                            <img src="https://styles.redditmedia.com/t5_2zp55/styles/communityIcon_bw077yiem0441.png" alt="r/ProgrammingBuddies icon" class="mb-0 shreddit-subreddit-icon__icon rounded-full overflow-hidden nd:visible nd:bg-secondary-background mb-md h-full w-full" width="32" height="32" style="color: #0079D3;background: #0079D3;width: 32px;height: 32px;" loading="lazy"/>
+                                        </div>
+                                        <faceplate-screen-reader-content>Go to ProgrammingBuddies
+            </faceplate-screen-reader-content>
+                                    </a>
+                                </faceplate-tracker>
+                            </span>
+                            <div class="flex gap-0 flex-col truncate">
+                                <span class="flex flex-none items-center flex-row gap-2xs flex-nowrap">
+                                    <span class="flex flex-none subreddit-name neutral-content font-bold text-12 whitespace-nowrap">
+                                        <faceplate-tracker source="post_credit_bar" action="click" noun="community" class="visible">
+                                            <shreddit-async-loader class="" bundleName="faceplate_hovercard">
+                                                <faceplate-hovercard class="nd:visible" position="bottom-start" data-id="community-hover-card" aria-label="r/ProgrammingBuddies">
+                                                    <a rpl class="subreddit-name whitespace-nowrap text-12 text-neutral-content font-bold  a cursor-pointer
+
+
+
+  no-visited
+  no-underline hover:no-underline
+  " href="/r/ProgrammingBuddies/">r/ProgrammingBuddies</a>
+                                                    <div slot="content" class="max-w-[360px] w-[90vw] overflow-hidden p-0 -m-[0.5rem]">
+                                                        <div class="flex flex-col">
+                                                            <div class="h-[80px] w-auto overflow-hidden relative rounded-t-[16px]">
+                                                                <img src="https://styles.redditmedia.com/t5_2zp55/styles/bannerBackgroundImage_jwwxhlv0nsi31.jpg?format=pjpg&amp;s=26804f09bfcca7839d8929f7f4dff663d33f93da" alt="A banner for the subreddit" class="mb-0 w-full h-full object-cover absolute" loading="lazy"/>
+                                                            </div>
+                                                            <div class="px-sm pt-sm flex items-center">
+                                                                <span class="w-[48px] h-[48px] text-24 shrink-0">
+                                                                    <img src="https://styles.redditmedia.com/t5_2zp55/styles/communityIcon_bw077yiem0441.png" alt="r/ProgrammingBuddies icon" class="mb-0 shreddit-subreddit-icon__icon rounded-full overflow-hidden nd:visible nd:bg-secondary-background " width="48" height="48" style="color: #0079D3;background: #0079D3;width: 48px;height: 48px;" loading="lazy"/>
+                                                                </span>
+                                                                <span class="flex ml-xs grow-0 w-100">
+                                                                    <faceplate-tracker source="subreddit_hovercard" action="click" noun="title">
+                                                                        <a rpl class="text-18 font-bold text-neutral-content-strong leading-6 a cursor-pointer
+
+  text-14
+
+  no-visited
+  hover:underline
+  " href="/r/ProgrammingBuddies/">r/ProgrammingBuddies</a>
+                                                                    </faceplate-tracker>
+                                                                </span>
+                                                            </div>
+                                                            <p class="px-md pt-md m-0 whitespace-normal text-14 leading-5 font-normal">A place for people to group up to learn and teach programming to each other.
+            </p>
+                                                            <hr class="mx-md mt-md border-neutral-border-weak"/>
+                                                            <div class="px-md py-md flex items-center">
+                                                                <span class="flex flex-col">
+                                                                    <span class="text-14 text-neutral-content leading-5 font-semibold">
+                                                                        <faceplate-number number="62344" pretty></faceplate-number>
+                                                                    </span>
+                                                                    <span class="text-12 leading-4 text-neutral-content-weak">Members</span>
+                                                                </span>
+                                                                <span data-testid="community-hover-card:active-count" class="ml-xl flex flex-col">
+                                                                    <span class="text-14 text-neutral-content leading-5 font-semibold">
+                                                                        <faceplate-number number="2" pretty></faceplate-number>
+                                                                    </span>
+                                                                    <span class="flex items-center">
+                                                                        <span class="bg-kiwigreen-400 rounded-full w-xs h-xs"></span>
+                                                                        <span class="text-12 leading-4 text-neutral-content-weak ml-2xs">Online</span>
+                                                                    </span>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </faceplate-hovercard>
+                                            </shreddit-async-loader>
+                                        </faceplate-tracker>
+                                    </span>
+                                    <span id="time-ago-separator" class="flex items-center w-2xs text-neutral-content-weak font-normal text-12">•</span>
+                                    <faceplate-timeago ts="2024-11-29T21:32:13.507000+0000" short class="flex items-center whitespace-nowrap text-neutral-content-weak font-normal text-12"></faceplate-timeago>
+                                </span>
+                                <div class="flex flex-none flex-row gap-2xs items-center flex-nowrap">
+                                    <span slot="authorName" class="flex">
+                                        <div class="inline-flex items-center max-w-full">
+                                            <faceplate-hovercard enter-delay="500" leave-delay="150" position="bottom-start" data-id="user-hover-card" label="heleskey details">
+                                                <faceplate-tracker source="post_credit_bar" action="click" noun="user_profile" class="visible">
+                                                    <a rpl class="author-name whitespace-nowrap text-neutral-content visited:text-neutral-content-weak  a cursor-pointer
+
+
+
+  no-visited
+  no-underline hover:no-underline
+  " href="/user/heleskey/">heleskey</a>
+                                                </faceplate-tracker>
+                                                <div slot="content">
+                                                    <faceplate-partial src="/svc/shreddit/user-hover-card/heleskey" loading="programmatic">
+                                                        <div class="w-5xl h-4xl flex items-center justify-center">
+                                                            <faceplate-progress value="20" class="animate-spin"></faceplate-progress>
+                                                        </div>
+                                                    </faceplate-partial>
+                                                </div>
+                                            </faceplate-hovercard>
+                                        </div>
+                                    </span>
+                                    <span class="items-center flex icon-container">
+                                        <shreddit-async-loader bundlename="distinguished_post_tags" class="flex items-center">
+                                            <shreddit-distinguished-post-tags class="nd:visible inline-flex" post-id="t3_1h2wf68">
+                                                <span class="hidden font-semibold text-12 tracking-wide distinguished-admin text-identity-admin" aria-label="Post distinguished by admin">ADMIN
+    </span>
+                                                <span class="hidden font-semibold text-12 tracking-wide distinguished-mod text-identity-moderator" aria-label="Post distinguished by moderator">MOD
+    </span>
+                                            </shreddit-distinguished-post-tags>
+                                        </shreddit-async-loader>
+                                    </span>
+                                </div>
+                            </div>
+                        </span>
+                        <span class="flex items-center pl-xs">
+                            <shreddit-async-loader bundlename="status_icons">
+                                <shreddit-status-icons class="nd:visible flex items-center gap-2xs isolate" thing-id="t3_1h2wf68">
+                                    <rpl-tooltip class="nd:visible" appearance="inverted" trigger="hover focus" content="Locked post">
+                                        <svg rpl aria-label="Locked post" class="hidden lock-status fill-[color:var(--color-identity-coins)] shrink-0" fill="currentColor" height="12" icon-name="lock-fill" viewBox="0 0 20 20" width="12" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M16.375 8H15V5.312A5.17 5.17 0 0 0 10 0a5.169 5.169 0 0 0-5 5.312V8H3.625A1.629 1.629 0 0 0 2 9.63v7.74A1.629 1.629 0 0 0 3.625 19h12.75A1.629 1.629 0 0 0 18 17.37V9.63A1.629 1.629 0 0 0 16.375 8Zm-3.25 0h-6.25V5.313A3.3 3.3 0 0 1 10 1.875a3.3 3.3 0 0 1 3.125 3.438V8Z"></path>
+                                        </svg>
+                                    </rpl-tooltip>
+                                    <rpl-tooltip class="nd:visible" appearance="inverted" trigger="hover focus" content="Stickied post">
+                                        <svg rpl aria-label="Stickied post" class="hidden stickied-status fill-[color:var(--color-identity-moderator)] shrink-0" fill="currentColor" height="12" icon-name="pin-fill" viewBox="0 0 20 20" width="12" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M19.6 6.876 13.124.4a1.132 1.132 0 0 0-1.606 0l-.665.665a2.083 2.083 0 0 0-.379 2.435L6.68 7.292a2.085 2.085 0 0 0-2.432.374l-.665.665a1.14 1.14 0 0 0 0 1.612l2.53 2.53-5.82 5.82 1.414 1.414 5.82-5.82 2.53 2.53a1.132 1.132 0 0 0 1.606 0l.665-.665a2.084 2.084 0 0 0 .375-2.432L16.5 9.528a2.126 2.126 0 0 0 2.433-.375l.666-.666a1.142 1.142 0 0 0 .001-1.611Z"></path>
+                                        </svg>
+                                    </rpl-tooltip>
+                                    <rpl-tooltip class="nd:visible" appearance="inverted" trigger="hover focus" content="Archived post">
+                                        <svg rpl aria-label="Archived post" class="hidden archived-status fill-[color:var(--color-identity-coins)] shrink-0" fill="currentColor" height="12" icon-name="archived-fill" viewBox="0 0 20 20" width="12" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M19 2.125v3.75A1.127 1.127 0 0 1 17.875 7H2.125A1.127 1.127 0 0 1 1 5.875v-3.75A1.127 1.127 0 0 1 2.125 1h15.75A1.127 1.127 0 0 1 19 2.125Zm-1 6.287v9.453a1.19 1.19 0 0 1-1.192 1.185H3.192A1.19 1.19 0 0 1 2 17.865V8.412c.042 0 .082.013.125.013h15.75c.043 0 .083-.011.125-.013ZM13.35 11h-6.7v1.5h6.7V11Z"></path>
+                                        </svg>
+                                    </rpl-tooltip>
+                                </shreddit-status-icons>
+                            </shreddit-async-loader>
+                            <shreddit-async-loader class="relative min-w-[32px] -mr-[7px]" bundleName="shreddit_post_overflow_menu">
+                                <shreddit-post-overflow-menu post-id="t3_1h2wf68" author-id="t2_vgoj4x77" author-name="heleskey" subreddit-id="t5_2zp55" subreddit-prefixed-name="r/ProgrammingBuddies" comment-count="11" permalink="/r/ProgrammingBuddies/comments/1h2wf68/looking_for_a_longterm_study_partner/" post-view-context="CommentsPage" can-update-commercial-communication-status current-user-id="t2_nw87cs8" is-logged-in is-desktop-viewport ama-state="" ama-starts-at="" ama-ends-at="" feed-index=""></shreddit-post-overflow-menu>
+                            </shreddit-async-loader>
+                        </span>
+                    </div>
+                    <h1 id="post-title-t3_1h2wf68" slot="title" class="font-semibold text-neutral-content-strong m-0 text-18 xs:text-24  mb-xs px-md xs:px-0 xs:mb-md  overflow-hidden" aria-label="Post Title: Looking for a long-term study partner">
+                        Looking for a long-term study partner <faceplate-perfmark name="first-post-meaningful-paint"></faceplate-perfmark>
+                    </h1>
+                    <shreddit-post-flair slot="post-flair" post-id="t3_1h2wf68">
+                        <faceplate-tracker source="post" action="click" noun="post_flair">
+                            <a href="/r/ProgrammingBuddies/?f=flair_name%3A%22LOOKING%20FOR%20BUDDIES%22" class="no-decoration">
+                                <span class="bg-tone-4 inline-block truncate max-w-full text-12 font-normal align-text-bottom box-border px-[6px] rounded-[20px] leading-4 text-global-white  " style="background-color: #19A0AA;">
+                                    <div class="flair-content [&_.flair-image]:align-bottom max-w-full overflow-hidden whitespace-nowrap text-ellipsis">LOOKING FOR BUDDIES
+  </div>
+                                </span>
+                            </a>
+                        </faceplate-tracker>
+                    </shreddit-post-flair>
+                    <div class="text-neutral-content" slot="text-body">
+                        <div class="mb-sm  mb-xs px-md xs:px-0 overflow-hidden" data-post-click-location="text-body">
+                            <div id="t3_1h2wf68-post-rtjson-content" class="md text-14" style="--emote-size: 20px">
+                                <p>Hello everyone, I &#39;m looking for someone to be my long-term study friend!
+  </p>
+                                <p>I just want us to motivate each other, check up on each other, send memes or gifs. We can sometimes talk about the topics we study and teach each other a few new things!
+  </p>
+                                <p>Tell me what you &#39;re studying and what your methods of studying are and let &#39;s talk!
+  </p>
+                            </div>
+                        </div>
+                    </div>
+                    <shreddit-async-loader id="recent-posts-tracker" bundleName="recent_posts_tracker">
+                        <recent-posts-tracker post-id="t3_1h2wf68" user-id="t2_nw87cs8" country="US" cookie-domain=".reddit.com"></recent-posts-tracker>
+                    </shreddit-async-loader>
+                </shreddit-post>
+                <faceplate-loader name="DevvitPrivacyModal_n98hrb" src="https://www.redditstatic.com/shreddit/en-US/devvit-privacy-modal-client-js-cfb30d93.js" loading="programmatic"></faceplate-loader>
+                <faceplate-partial name="DevvitPrivacyModal_n98hrb" src="/svc/shreddit/devvit-privacy-modal/:subredditId/:postId/:appSlug/:appName/:appOwnerId" loading="programmatic"></faceplate-partial>
+                <faceplate-partial name="TopComments_9T32hK" src="/svc/shreddit/comments/r/programmingbuddies/t3_1h2wf68?render-mode=partial&amp;is_lit_ssr=false" loading="preload" class="block min-h-screen xs:min-h-[20rem]">
+                    <shreddit-loading></shreddit-loading>
+                </faceplate-partial>
+                <faceplate-loader name="ChatChannelRecommendations_qnmmxt" src="https://www.redditstatic.com/shreddit/en-US/chat-channel-card-client-js-f383c03b.js,https://www.redditstatic.com/shreddit/en-US/chat-channel-recommendations-client-js-177d915a.js" loading="lazy"></faceplate-loader>
+                <faceplate-partial name="ChatChannelRecommendations_qnmmxt" src="/svc/shreddit/1h2wf68/chat-channel-recommendations" loading="lazy"></faceplate-partial>
+            </main>
