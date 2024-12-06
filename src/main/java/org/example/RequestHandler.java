@@ -26,6 +26,8 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(final ChannelHandlerContext ctx, final Object msg) {
         if (msg instanceof FullHttpRequest) {
+            FullHttpRequest request = (FullHttpRequest) msg;
+            System.out.println("LINE 30 >>>> " + request.uri());
             handleHttpRequest(ctx, (FullHttpRequest) msg);
         }
     }
