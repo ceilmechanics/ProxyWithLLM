@@ -36,6 +36,13 @@
       <artifactId>bcprov-jdk15on</artifactId>
       <version>1.70</version> <!-- Use the latest version -->
     </dependency>
+
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20231013</version>
+    </dependency>
+
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpkix-jdk15on</artifactId>

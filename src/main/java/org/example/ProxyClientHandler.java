@@ -142,42 +142,43 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
 
     private void insertJavaScriptToHTML(ChannelHandlerContext ctx, HttpResponse currentResponse, StringBuilder contentBuilder) {
         System.out.println("LINE 142");
+        String jsCode = """
+            <script>
+                async function callRemoteApi() {
+                    try {
+                        console.log("Preparing for >>>> calling LLM API");
+                        const response = await fetch('https://myproxydummyhost/llmapi', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                data: 'example'
+                            })
+                        });
+                        console.log("Finished >>>> calling LLM API");
+                        const data = await response.json();
+                        console.log('API Response:', data);
+                    } catch (error) {
+                        console.error('Error calling API:', error);
+                    }
+                }
+
+                // Call the function when page loads
+                document.addEventListener('DOMContentLoaded', callRemoteApi);
+            </script>
+        """;
+
 //        String jsCode = """
 //            <script>
-//                async function callRemoteApi() {
-//                    try {
-//                        const response = await fetch('https://localhost/myproxy/llmpost/', {
-//                            method: 'POST',
-//                            headers: {
-//                                'Content-Type': 'application/json'
-//                            },
-//                            body: JSON.stringify({
-//                                data: 'example'
-//                            })
-//                        });
-//                        console.log("API called");
-//                        const data = await response.json();
-//                        console.log('API Response:', data);
-//                    } catch (error) {
-//                        console.error('Error calling API:', error);
-//                    }
+//                function callRemoteApi() {
+//                    console.log("test >>>> api call maded!");
 //                }
 //
 //                // Call the function when page loads
 //                document.addEventListener('DOMContentLoaded', callRemoteApi);
 //            </script>
 //        """;
-
-        String jsCode = """
-            <script>
-                function callRemoteApi() {
-                    console.log("test >>>> api call maded!");
-                }
-        
-                // Call the function when page loads
-                document.addEventListener('DOMContentLoaded', callRemoteApi);
-            </script>
-        """;
 
         // Insert the JavaScript code before the closing </body> tag
         String originalContent = contentBuilder.toString();
