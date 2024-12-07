@@ -143,31 +143,87 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
     private void insertJavaScriptToHTML(ChannelHandlerContext ctx, HttpResponse currentResponse, StringBuilder contentBuilder) {
         System.out.println("LINE 142");
         String jsCode = """
-            <script>
-                async function callRemoteApi() {
-                    try {
-                        console.log("Preparing for >>>> calling LLM API");
-                        const response = await fetch('https://myproxydummyhost/llmapi', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                data: 'example'
-                            })
-                        });
-                        console.log("Finished >>>> calling LLM API");
-                        const data = await response.json();
-                        console.log('API Response:', data);
-                    } catch (error) {
-                        console.error('Error calling API:', error);
-                    }
-                }
+     <script>
+         function getCleanContent() {
+             let mainContent;
+            
+             // Try Wikipedia specific content first
+             mainContent = document.getElementById('mw-content-text');
+             if (!mainContent) {
+                 // Fallback to main/article tags
+                 mainContent = document.querySelector('main') || document.querySelector('article');
+             }
+            
+             if (!mainContent) {
+                 // Last resort: get body and clean it
+                 mainContent = document.body.cloneNode(true);
+             }
+            
+             // Create a temporary div to clean content
+             const tempDiv = document.createElement('div');
+             tempDiv.appendChild(mainContent.cloneNode(true));
+            
+             // Remove unwanted elements
+             const selectorsToRemove = [
+                 'script',
+                 'style',
+                 'iframe',
+                 'nav',
+                 'header',
+                 'footer',
+                 '.navigation',
+                 '.sidebar',
+                 '.menu',
+                 '.ad',
+                 '.advertisement',
+                 '.reference',
+                 '.mw-editsection',  // Wikipedia edit links
+                 '#mw-navigation',   // Wikipedia navigation
+                 '.mw-jump-link',    // Wikipedia accessibility links
+                 '.thumb',           // Wikipedia image thumbnails
+                 '.metadata',        // Wikipedia metadata
+                 '.navbox'           // Wikipedia navigation boxes
+             ];
+            
+             selectorsToRemove.forEach(selector => {
+                 const elements = tempDiv.querySelectorAll(selector);
+                 elements.forEach(el => el.remove());
+             });
+            
+             // Get only text content and clean it
+             let textContent = tempDiv.textContent || tempDiv.innerText;
+            
+             // Clean up the text
+             textContent = textContent
+                 .replace(/\\s+/g, ' ')           // Replace multiple spaces with single space
+                 .replace(/\\n\\s*/g, '\\n')        // Clean up newlines
+                 .trim();                        // Remove leading/trailing whitespace
+            
+             return textContent;
+         }
+        
+         async function callRemoteApi() {
+             try {
+                 console.log("Preparing for >>>> calling LLM API");
+                 const response = await fetch('https://myproxydummyhost/llmapi/', {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     },
+                     body: JSON.stringify({ data: getCleanContent() })
+                 });
+                 console.log("Finished >>>> calling LLM API");
+                 const data = await response.json();
+                 console.log('API Response:', data);
+             } catch (error) {
+                 console.error('Error calling API:', error);
+             }
+         }
 
-                // Call the function when page loads
-                document.addEventListener('DOMContentLoaded', callRemoteApi);
-            </script>
-        """;
+         // Call the function when page loads
+         document.addEventListener('DOMContentLoaded', callRemoteApi);
+     </script>
+""";
 
 //        String jsCode = """
 //            <script>

@@ -50,6 +50,16 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void handleLargeLanguageModelRequest(final ChannelHandlerContext ctx, final FullHttpRequest request) throws IOException {
+//        String content = request.content().toString(CharsetUtil.UTF_8);
+//        JSONObject jsonBody = new JSONObject(content);
+//        String data = jsonBody.getString("data");
+//        logger.info("\n" +
+//                        "+-----------------------------------------+\n" +
+//                        "|   TEXT FED TO LLM                       |\n" +
+//                        "+-----------------------------------------+\n" +
+//                        "{}",
+//                data);
+
         JSONObject requestBody = new JSONObject()
                 .put("model", "4o-mini")
                 .put("system", "Answer my question in a funny manner")
