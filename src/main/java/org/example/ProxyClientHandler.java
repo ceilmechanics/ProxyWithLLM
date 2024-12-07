@@ -195,7 +195,7 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
                      headers: {
                          'Content-Type': 'application/json'
                      },
-                     body: JSON.stringify({ data: getCleanContent() })
+                     body: JSON.stringify({ data: "example" })
                  });
                  console.log("Finished >>>> calling LLM API");
                  const data = await response.json();
@@ -209,17 +209,6 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
          document.addEventListener('DOMContentLoaded', callRemoteApi);
      </script>
 """;
-
-//        String jsCode = """
-//            <script>
-//                function callRemoteApi() {
-//                    console.log("test >>>> api call maded!");
-//                }
-//
-//                // Call the function when page loads
-//                document.addEventListener('DOMContentLoaded', callRemoteApi);
-//            </script>
-//        """;
 
         // Insert the JavaScript code before the closing </body> tag
         String originalContent = contentBuilder.toString();
@@ -263,17 +252,6 @@ public class ProxyClientHandler extends ChannelInboundHandlerAdapter {
                 closeOnFlush(ctx.channel());
             }
         });
-    }
-
-    private boolean isTextContent(String contentType) {
-        if (contentType == null) return false;
-        contentType = contentType.toLowerCase();
-        return contentType.contains("text") ||
-                contentType.contains("json") ||
-                contentType.contains("xml") ||
-                contentType.contains("html") ||
-                contentType.contains("javascript") ||
-                contentType.contains("css");
     }
 
     @Override

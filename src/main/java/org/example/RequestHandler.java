@@ -1,6 +1,7 @@
 package org.example;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
@@ -50,15 +51,50 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void handleLargeLanguageModelRequest(final ChannelHandlerContext ctx, final FullHttpRequest request) throws IOException {
-//        String content = request.content().toString(CharsetUtil.UTF_8);
-//        JSONObject jsonBody = new JSONObject(content);
-//        String data = jsonBody.getString("data");
+        if (request.method().equals(HttpMethod.OPTIONS)) {
+            FullHttpResponse clientResponse = new DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.NO_CONTENT
+            );
+
+            clientResponse.headers()
+                    .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+                    .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
+                    .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
+
+            ctx.channel().writeAndFlush(clientResponse);
+            return;
+        }
+//        // Clone and modify the request
+//        logger.info("Original request headers: {}", request.headers());
+//        logger.info("Original request content length: {}", request.content().readableBytes());
+//
+//        final FullHttpRequest modifiedRequest = request.copy();
 //        logger.info("\n" +
-//                        "+-----------------------------------------+\n" +
-//                        "|   TEXT FED TO LLM                       |\n" +
-//                        "+-----------------------------------------+\n" +
-//                        "{}",
-//                data);
+//                "+-----------------------------------------+\n" +
+//                "|   TEXT FED TO LLM                       |\n" +
+//                "+-----------------------------------------+\n");
+//        logger.info(modifiedRequest.toString());
+
+        String content = request.content().toString(CharsetUtil.UTF_8);
+//
+//        if (contentBuf.isReadable()) {
+//            logger.info("Content size: {}", contentBuf.readableBytes());
+//            String content = contentBuf.toString(CharsetUtil.UTF_8);
+//            logger.info("Content: {}", content);
+//        } else {
+//            logger.warn("Content buffer is not readable!");
+//        }
+
+
+        JSONObject jsonBody = new JSONObject(content);
+        String data = jsonBody.getString("data");
+        logger.info("\n" +
+                        "+-----------------------------------------+\n" +
+                        "|   TEXT FED TO LLM                       |\n" +
+                        "+-----------------------------------------+\n" +
+                        "{}",
+                content);
 
         JSONObject requestBody = new JSONObject()
                 .put("model", "4o-mini")
