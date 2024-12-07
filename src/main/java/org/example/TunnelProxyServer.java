@@ -52,7 +52,7 @@ public class TunnelProxyServer extends ChannelInboundHandlerAdapter {
                 Bootstrap bootstrap = new Bootstrap();
                 bootstrap.group(ctx.channel().eventLoop()) // register thread pool
                         .channel(ctx.channel().getClass())
-                        .handler(new ProxyClientHandler(ctx.channel()));
+                        .handler(new ProxyClientHandler(ctx.channel(), host));
 
                 ChannelFuture httpcf = bootstrap.connect(host, port);
                 httpcf.addListener((ChannelFutureListener) future -> {

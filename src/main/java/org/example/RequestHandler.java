@@ -196,7 +196,7 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                         ch.pipeline().addLast(new HttpContentDecompressor());
                         ch.pipeline().addLast(new HttpObjectAggregator(10 * 1024 * 1024));
                         ch.pipeline().addLast(new ChunkedWriteHandler());
-                        ch.pipeline().addLast(new ProxyClientHandler(ctx.channel()));
+                        ch.pipeline().addLast(new ProxyClientHandler(ctx.channel(), host));
                     }
                 });
 
