@@ -23,12 +23,11 @@ public class Prompt {
     private static final String CONTENTS_PROMPT = """
         Create a table of contents for the web page content. Follow these guidelines strictly:
         1. Based on the following text, create a table of contents with main sections and subsections. 
-        2. Use indentation to show hierarchy. Number the sections and subsections accordingly.
+        2. Use only bullet points on sections and subsections accordingly.
         3. Focus only on the core content: the beginning part of the paragraphs, main ideas, important details, and actionable insights.
-        4. Only the title for each section should be bold. Do not bold the text for sub-points.
-        5. Exclude irrelevant content such as advertisements, navigation links, or unrelated information.
-        6. Ensure the questions are clear, engaging, and aligned with the purpose of the web page.
-        7. Each sections and sub-points should be on a new line.
+        4. Exclude irrelevant content such as advertisements, navigation links, or unrelated information.
+        5. Ensure the questions are clear, engaging, and aligned with the purpose of the web page.
+        6. Each sections and sub-points should be on a new line.
         """;
 
     private static final String STUDY_GUIDE_PROMPT = """
