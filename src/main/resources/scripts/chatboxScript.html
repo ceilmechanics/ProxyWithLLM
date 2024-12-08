@@ -1,0 +1,744 @@
+<div class="fc-chat-container">
+    <div class="fc-chat-box" id="fcChatBox">
+        <div class="fc-chat-header" id="fcChatHeader">
+            <span class="fc-header-icon">✦</span>
+            <span class="fc-header-title">Chat Assistant</span>
+            <button class="fc-minimize-button" id="fcMinimizeButton">−</button>
+        </div>
+
+        <div class="fc-nav-section">
+            <div class="fc-nav-title">Help me create</div>
+            <div class="fc-nav-buttons" id="fcNavButtons">
+                <button class="fc-nav-button" data-section="summary">
+                    <span>📋</span>Summary
+                </button>
+                <button class="fc-nav-button" data-section="study-guide">
+                    <span>📚</span>Study Guide
+                </button>
+                <button class="fc-nav-button" data-section="contents">
+                    <span>📑</span>Table of Contents
+                </button>
+            </div>
+        </div>
+
+        <div id="fcLoadingContainer" class="fc-loading-container">
+            <div class="fc-spinner"></div>
+        </div>
+
+        <div class="fc-suggested-questions">
+            <div class="fc-nav-title">Suggested questions</div>
+            <div id="fcQuestions">
+                <button
+                        class="fc-question-button"
+                        data-question="What key challenges does this solve?"
+                >
+                    What key challenges does this solve?
+                </button>
+                <button
+                        class="fc-question-button"
+                        data-question="How can I implement this effectively?"
+                >
+                    How can I implement this effectively?
+                </button>
+                <button
+                        class="fc-question-button"
+                        data-question="What are the best practices to follow?"
+                >
+                    What are the best practices to follow?
+                </button>
+            </div>
+        </div>
+
+        <div class="fc-chat-messages" id="fcChatMessages">
+            <div class="fc-message">
+                <div class="fc-message-avatar">A</div>
+                <div class="fc-message-content">
+                    <div>Hello, how can I help you?</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fc-input-container">
+            <div class="fc-input-wrapper">
+                <input
+                        type="text"
+                        class="fc-chat-input"
+                        id="fcMessageInput"
+                        placeholder="Type your message..."
+                />
+                <button class="fc-send-button" id="fcSendButton">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const FloatingChatbox = {
+        init() {
+            this.chatBox = document.getElementById("fcChatBox");
+            this.chatHeader = document.getElementById("fcChatHeader");
+            this.chatMessages = document.getElementById("fcChatMessages");
+            this.messageInput = document.getElementById("fcMessageInput");
+            this.sendButton = document.getElementById("fcSendButton");
+            this.minimizeButton = document.getElementById("fcMinimizeButton");
+            this.questionsContainer = document.getElementById("fcQuestions"); // Add this line
+
+            this.isMinimized = false;
+
+            // Bind methods to preserve 'this' context
+            this.handleNavClick = this.handleNavClick.bind(this);
+            this.handleSuggestedQuestion =
+                this.handleSuggestedQuestion.bind(this);
+            this.sendMessage = this.sendMessage.bind(this);
+            this.addMessage = this.addMessage.bind(this);
+            this.toggleMinimize = this.toggleMinimize.bind(this);
+
+            // Add API endpoint configuration
+            this.proxyLLMEndpoint = "https://myproxydummyhost/llmapi";
+            this.sessionId = this.generateSessionId();
+            this.lastk = 1;
+
+            this.loadInitialSuggestedQuestions();
+
+            this.setupEventListeners();
+        },
+
+        generateSessionId() {
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 1000); // Add randomness to prevent collisions
+            return `${timestamp}-${random}`;
+        },
+
+        async loadInitialSuggestedQuestions() {
+            // Get the questions container
+            const loadingContainer =
+                document.getElementById("fcLoadingContainer");
+            const questionsSection = document.querySelector(
+                ".fc-suggested-questions"
+            );
+
+            // Show loading spinner
+            loadingContainer.classList.add("show");
+            questionsSection.style.display = "none";
+
+            try {
+                // You can either fetch from API or use static questions
+                const response = await this.fetchApiResponse({
+                    query: this.extractTextFromTags(),
+                    userInput: "",
+                    sessionId: this.sessionId,
+                    lastk: this.lastk++,
+                    command: "suggestedQuestions",
+                });
+
+                // Hide loading spinner and show questions
+                loadingContainer.classList.remove("show");
+                questionsSection.style.display = "block";
+
+                this.renderSuggestedQuestions(response);
+            } catch (error) {
+                console.error("Error loading initial questions:", error);
+                loadingContainer.classList.remove("show");
+                questionsSection.style.display = "block";
+            }
+        },
+
+        renderSuggestedQuestions(response) {
+            this.questionsContainer.innerHTML = ""; // Clear existing questions
+            const questions = response.split("\n");
+            questions.forEach((question, index) => {
+                const button = document.createElement("button");
+                button.className = "fc-question-button";
+                button.dataset.question = question;
+                button.dataset.id = index;
+                button.textContent = question;
+                this.questionsContainer.appendChild(button);
+            });
+        },
+
+        async fetchApiResponse(requestBody) {
+            const response = await fetch(this.proxyLLMEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(requestBody), // Convert request object to JSON
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log("API response: " + data.result);
+            return data.result;
+        },
+
+        getCleanContent() {
+            const contentElement = document.getElementById("mw-content-text");
+            if (!contentElement) return "";
+
+            // Create a copy to work with
+            const contentCopy = contentElement.cloneNode(true);
+
+            // Remove unwanted sections
+            const selectorsToRemove = [
+                ".mw-editsection",
+                ".reference",
+                ".reflist",
+                ".navbox",
+                ".infobox",
+                ".sidebar",
+                ".metadata",
+                ".hatnote",
+                ".portal",
+                "table",
+                ".thumbinner",
+                ".fc-chat-container",
+            ];
+
+            // Remove elements
+            selectorsToRemove.forEach((selector) => {
+                contentCopy.querySelectorAll(selector).forEach((el) => el.remove());
+            });
+
+            // Get all paragraphs and headings
+            const contentNodes = contentCopy.querySelectorAll(
+                "p, h2, h3, h4, h5, h6"
+            );
+            // Extract text from each node
+            const textParts = Array.from(contentNodes)
+                .map((node) => node.textContent.trim())
+                .filter((text) => text.length > 0);
+
+            // Join and clean the text
+            let cleanText = textParts.join(" ");
+
+            // Clean the text
+            cleanText = cleanText
+                // First, protect periods and commas by adding a space after them
+                .replace(/\./g, ". ")
+                .replace(/,/g, ", ")
+                // Remove all characters except letters, numbers, periods, commas, and spaces
+                .replace(/[^a-zA-Z0-9,. ]/g, "")
+                // Fix spacing issues
+                .replace(/\s+/g, " ") // Multiple spaces to single space
+                // Clean up extra spaces around periods and commas
+                .replace(/\s+\./g, ".") // Remove space before period
+                .replace(/\s+,/g, ",") // Remove space before comma
+                .replace(/,\s+/g, ", ") // Ensure single space after comma
+                .replace(/\.\s+/g, ". ") // Ensure single space after period
+                .trim();
+
+            return cleanText;
+        },
+
+        getContentFromWebpage() {
+            // Get the most likely content container using common selectors
+            let mainContent;
+            const contentSelectors = [
+                "article", // Article content
+                "main", // Main content
+                ".post-content", // Blog posts
+                ".entry-content", // WordPress
+                ".article-content", // News articles
+                ".content", // Generic content
+                ".main-content", // Generic main content
+                "#content", // Content by ID
+                "#main-content", // Main content by ID
+                ".blog-post", // Blog posts
+                ".post", // Posts
+                '[role="main"]', // ARIA role main
+                ".story", // News stories
+                '[itemprop="articleBody"]', // Schema.org article body
+                ".page-content", // Page content
+                ".container", // Generic container
+            ];
+
+            // Try each selector until we find content
+            for (const selector of contentSelectors) {
+                mainContent = document.querySelector(selector);
+                if (mainContent) break;
+            }
+
+            // If no specific content container found, use body
+            if (!mainContent) {
+                mainContent = document.body.cloneNode(true);
+            }
+
+            // Create a temporary div for cleaning
+            const tempDiv = document.createElement("div");
+            tempDiv.appendChild(mainContent.cloneNode(true));
+
+            // Remove unwanted elements that typically don't contain main content
+            const selectorsToRemove = [
+                "script", // Scripts
+                "style", // Styles
+                "link", // External links/styles
+                "meta", // Meta tags
+                "iframe", // Embedded frames
+                "nav", // Navigation
+                "header", // Header
+                "footer", // Footer
+                "aside", // Sidebars
+                ".sidebar", // Sidebar by class
+                ".nav", // Navigation
+                ".navigation", // Navigation
+                ".menu", // Menus
+                ".ad", // Ads
+                ".advertisement", // Advertisements
+                ".banner", // Banners
+                ".social", // Social media
+                ".share", // Share buttons
+                ".comments", // Comments section
+                ".comment", // Individual comments
+                ".related", // Related content
+                ".recommended", // Recommended content
+                ".newsletter", // Newsletter signup
+                ".subscribe", // Subscription forms
+                ".cookie", // Cookie notices
+                ".popup", // Popups
+                ".modal", // Modal dialogs
+                ".search", // Search boxes
+                "form", // Forms
+                ".breadcrumb", // Breadcrumb navigation
+                ".pagination", // Pagination
+                ".author-bio", // Author biography
+                ".tags", // Tags
+                ".categories", // Categories
+                "#sidebar", // Sidebar by ID
+                '[role="complementary"]', // Complementary content
+                '[role="banner"]', // Banner content
+                '[role="navigation"]', // Navigation content
+            ];
+
+            // Remove unwanted elements
+            selectorsToRemove.forEach((selector) => {
+                tempDiv.querySelectorAll(selector).forEach((el) => el.remove());
+            });
+
+            // Get text content
+            let textContent = tempDiv.textContent || tempDiv.innerText;
+
+            // Clean up the text
+            textContent = textContent
+                // Remove excessive whitespace
+                .replace(/\s+/g, " ")
+                // Remove ASCII control characters
+                .replace(/[\x00-\x1F\x7F]/g, "")
+                // Replace smart quotes with regular quotes
+                .replace(/[\u2018\u2019]/g, "'")
+                .replace(/[\u201C\u201D]/g, '"')
+                // Replace various dashes with regular hyphen
+                .replace(/[\u2013\u2014\u2015]/g, "-")
+                // Replace ellipsis with three dots
+                .replace(/\u2026/g, "...")
+                // Remove other special characters but keep basic punctuation
+                .replace(/[^\w\s.,!?;:'"()-]/g, "")
+                // Clean up spacing around punctuation
+                .replace(/\s+([.,!?;:])/g, "$1")
+                .replace(/([.,!?;:])\s+/g, "$1 ")
+                // Remove multiple consecutive spaces
+                .replace(/\s{2,}/g, " ")
+                .trim();
+
+            return textContent;
+        },
+
+        extractTextFromTags() {
+            const content = this.getCleanContent();
+            if (content.length != 0) {
+                return content;
+            }
+            // Get body content
+            const body = document.body;
+            const textTags = body.querySelectorAll(
+                "p, div, span, em, h1, h2, h3, h4, h5, h6, strong, b, i, article, section, main, li, td, th, label, caption, figcaption, blockquote, pre, code, a"
+            );
+
+            let allText = [];
+
+            textTags.forEach((element) => {
+                // Check if this element's direct text content (not including children) has content
+                const ownText = Array.from(element.childNodes)
+                    .filter((node) => node.nodeType === Node.TEXT_NODE)
+                    .map((node) => node.textContent.trim())
+                    .join(" ");
+
+                if (ownText) {
+                    allText.push(ownText);
+                }
+            });
+
+            // Clean the text
+            let cleanText = allText
+                .join(" ")
+                // Remove excess whitespace
+                .replace(/\s+/g, " ")
+                // Remove special characters but keep basic punctuation
+                .replace(/[^\w\s.,!?;:'"()-]/g, "")
+                // Clean up spacing around punctuation
+                .replace(/\s+([.,!?;:])/g, "$1")
+                .replace(/([.,!?;:])\s+/g, "$1 ")
+                .trim();
+
+            return cleanText;
+        },
+
+        formatResponseToHtml(response) {
+            // Debug log 1
+            console.log("Original response:", response);
+
+            // Remove the initial summary header
+            response = response.replace(/^###[\s\S]*?\n/, "");
+
+            // Debug log 2
+            console.log("After removing header:", response);
+
+            // First split by main sections
+            let mainSplit = response.split(/\s*-\s*\*\*/);
+
+            // Debug log 3
+            console.log("Main sections split:", mainSplit);
+
+            let html = '<div class="fc-formatted-response">';
+
+            mainSplit.forEach((section, index) => {
+                // Skip empty sections
+                if (!section.trim()) return;
+
+                // Debug log 4
+                console.log(`Processing section ${index}:`, section);
+
+                // Split the section into title and content
+                let parts = section.split("**: ");
+
+                // Debug log 5
+                console.log(`Section ${index} parts:`, parts);
+
+                if (parts.length >= 2) {
+                    const title = parts[0].trim();
+                    const content = parts.slice(1).join("**: ").trim();
+
+                    html += `
+                      <div class="fc-formatted-section">
+                          <h3 class="fc-formatted-title">${title}</h3>
+                          <ul class="fc-formatted-list">
+                  `;
+
+                    // Split content by bullet points
+                    const bulletPoints = content
+                        .split(/\n-\s+/)
+                        .filter((item) => item.trim());
+
+                    // Debug log 6
+                    console.log(`Bullet points for section ${index}:`, bulletPoints);
+
+                    bulletPoints.forEach((item) => {
+                        if (item.trim()) {
+                            html += `<li class="fc-formatted-item">${item.trim()}</li>`;
+                        }
+                    });
+
+                    html += `
+                          </ul>
+                      </div>
+                  `;
+                }
+            });
+
+            html += "</div>";
+
+            // Debug log 7
+            console.log("Final HTML:", html);
+
+            return html;
+        },
+
+        setupEventListeners() {
+            // Minimize functionality
+            this.minimizeButton.addEventListener("click", (e) => {
+                e.stopPropagation();
+                this.toggleMinimize();
+            });
+
+            // Navigation buttons
+            document
+                .getElementById("fcNavButtons")
+                .addEventListener("click", (e) => {
+                    const button = e.target.closest(".fc-nav-button");
+                    if (button) {
+                        this.handleNavClick(button);
+                    }
+                });
+
+            // Question buttons
+            document
+                .getElementById("fcQuestions")
+                .addEventListener("click", (e) => {
+                    const button = e.target.closest(".fc-question-button");
+                    if (button) {
+                        this.handleSuggestedQuestion(button);
+                    }
+                });
+
+            this.sendButton.addEventListener("click", async () => {
+                await this.sendMessage();
+            });
+
+            this.messageInput.addEventListener("keypress", async (e) => {
+                if (e.key === "Enter") {
+                    await this.sendMessage();
+                }
+            });
+        },
+
+        toggleMinimize() {
+            this.isMinimized = !this.isMinimized;
+            this.chatBox.classList.toggle("minimized");
+            this.minimizeButton.textContent = this.isMinimized ? "+" : "−";
+        },
+
+        async handleNavClick(button) {
+            document
+                .querySelectorAll(".fc-nav-button")
+                .forEach((btn) => btn.classList.remove("fc-active"));
+            button.classList.add("fc-active");
+
+            this.addMessage(
+                `Help me create a ${button.dataset.section.replace("-", " ")}`,
+                true,
+                false
+            );
+
+            // Add loading message
+            const loadingMessage = this.addMessage("", false, true);
+
+            try {
+                const response = await this.fetchApiResponse({
+                    query: this.extractTextFromTags(),
+                    userInput: "",
+                    sessionId: this.sessionId,
+                    lastk: this.lastk++,
+                    command: button.dataset.section.replace("-", " "),
+                });
+
+                // Remove loading message and show response
+                loadingMessage.remove();
+                this.addMessage(response);
+            } catch (error) {
+                console.error(error);
+
+                // Remove loading message and show error
+                loadingMessage.remove();
+                this.addMessage(
+                    "Sorry, something went wrong. Please try again.",
+                    false
+                );
+            }
+        },
+
+        markdownToHtml(markdown) {
+            if (!markdown) return "";
+
+            let html = markdown;
+
+            // Store code blocks temporarily
+            const codeBlocks = [];
+            html = html.replace(/```[\s\S]*?```/g, (match) => {
+                codeBlocks.push(match);
+                return `{{CODE_BLOCK_${codeBlocks.length - 1}}}`;
+            });
+
+            // Headers
+            html = html.replace(
+                /^(#{1,6})\s+(.+)$/gm,
+                (match, hashes, content) =>
+                    `<h${hashes.length}>${content.trim()}</h${hashes.length}>`
+            );
+
+            // Bold and italic
+            html = html.replace(
+                /\*\*\*(.*?)\*\*\*/g,
+                "<strong><em>$1</em></strong>"
+            );
+            html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+            // Lists - Fixed to only match proper list items
+            html = html.replace(
+                /^[ \t]*[-*+][ \t]+[^\n]+(?:\n(?![ \t]*[-*+][ \t]|[ \t]*\d+\.[ \t]|\n)[^\n]+)*(?:\n|$)(?:[ \t]*[-*+][ \t]+[^\n]+(?:\n(?![ \t]*[-*+][ \t]|[ \t]*\d+\.[ \t]|\n)[^\n]+)*(?:\n|$))*/gm,
+                (match) => {
+                    const items = match
+                        .trim()
+                        .split(/^[ \t]*[-*+][ \t]+/m)
+                        .filter(Boolean);
+                    return (
+                        "\n<ul>\n" +
+                        items.map((item) => `  <li>${item.trim()}</li>`).join("\n") +
+                        "\n</ul>\n"
+                    );
+                }
+            );
+
+            html = html.replace(
+                /^[ \t]*\d+\.[ \t]+[^\n]+(?:\n(?![ \t]*\d+\.[ \t]|[ \t]*[-*+][ \t]|\n)[^\n]+)*(?:\n|$)(?:[ \t]*\d+\.[ \t]+[^\n]+(?:\n(?![ \t]*\d+\.[ \t]|[ \t]*[-*+][ \t]|\n)[^\n]+)*(?:\n|$))*/gm,
+                (match) => {
+                    const items = match
+                        .trim()
+                        .split(/^[ \t]*\d+\.[ \t]+/m)
+                        .filter(Boolean);
+                    return (
+                        "\n<ol>\n" +
+                        items.map((item) => `  <li>${item.trim()}</li>`).join("\n") +
+                        "\n</ol>\n"
+                    );
+                }
+            );
+
+            // Links
+            html = html.replace(
+                /\[([^\]]+)\]\(([^)]+)\)/g,
+                '<a href="$2">$1</a>'
+            );
+
+            // Code inline
+            html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+            // Blockquotes
+            html = html.replace(/^>\s+(.+)$/gm, "<blockquote>$1</blockquote>");
+
+            // Paragraphs
+            html = html.replace(/^(?!<[a-z])[^\n].+$/gm, (match) => {
+                if (!match.startsWith("<")) {
+                    return `<p>${match}</p>`;
+                }
+                return match;
+            });
+
+            // Restore code blocks
+            codeBlocks.forEach((block, index) => {
+                const code = block.replace(
+                    /```(\w+)?\n([\s\S]*?)```/,
+                    (match, lang, content) => {
+                        const language = lang ? ` class="language-${lang}"` : "";
+                        return `<pre><code${language}>${content
+                            .trim()
+                            .replace(/&/g, "&amp;")
+                            .replace(/</g, "&lt;")
+                            .replace(/>/g, "&gt;")
+                            .replace(/"/g, "&quot;")
+                            .replace(/'/g, "&#039;")}</code></pre>`;
+                    }
+                );
+                html = html.replace(`{{CODE_BLOCK_${index}}}`, code);
+            });
+
+            return html.trim();
+        },
+
+        async handleSuggestedQuestion(button) {
+            this.addMessage(button.dataset.question, true);
+            button.remove(); // Remove the question after clicking
+
+            // Add loading message
+            const loadingMessage = this.addMessage("", false, true);
+
+            try {
+                const response = await this.fetchApiResponse({
+                    query: this.extractTextFromTags(),
+                    userInput: button.dataset.question,
+                    sessionId: this.sessionId,
+                    lastk: this.lastk++,
+                    command: "chat",
+                });
+
+                // Remove loading message and show response
+                loadingMessage.remove();
+                this.addMessage(response);
+            } catch (error) {
+                console.error("Error loading initial questions:", error);
+
+                // Remove loading message and show error
+                loadingMessage.remove();
+                this.addMessage(
+                    "Sorry, something went wrong. Please try again.",
+                    false
+                );
+            }
+        },
+
+        async sendMessage() {
+            const message = this.messageInput.value.trim();
+            this.addMessage(message, true, false);
+
+            if (message) {
+                try {
+                    // Add loading message
+                    const loadingMessage = this.addMessage("", false, true);
+                    this.messageInput.value = "";
+
+                    const response = await this.fetchApiResponse({
+                        query: this.extractTextFromTags(),
+                        userInput: message,
+                        sessionId: "GenericSession",
+                        lastk: 1,
+                        command: "chat",
+                    });
+
+                    // Remove loading message and show response
+                    loadingMessage.remove();
+                    this.addMessage(response);
+                } catch (error) {
+                    console.error(error);
+
+                    // Remove loading message and show error
+                    loadingMessage.remove();
+                    this.addMessage(
+                        "Sorry, something went wrong. Please try again.",
+                        false
+                    );
+                }
+            }
+        },
+
+        addMessage(message, isUser = false, isLoading = false) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `fc-message${
+                isUser ? " fc-user-message" : ""
+            }`;
+
+            const avatar = document.createElement("div");
+            avatar.className = "fc-message-avatar";
+            avatar.textContent = isUser ? "U" : "A";
+
+            const content = document.createElement("div");
+            content.className = "fc-message-content";
+
+            if (isLoading) {
+                content.innerHTML =
+                    '<div class="fc-typing-indicator">Typing<span>.</span><span>.</span><span>.</span></div>';
+            } else {
+                // Format response if it's from assistant and contains markdown-style formatting
+                if (!isUser && message.includes("**")) {
+                    content.innerHTML = this.markdownToHtml(message);
+                } else {
+                    content.textContent = message;
+                }
+            }
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+
+            this.chatMessages.appendChild(messageDiv);
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+
+            return messageDiv;
+        },
+    };
+
+    // Initialize the chatbox when the document is ready
+    document.addEventListener("DOMContentLoaded", () => {
+        FloatingChatbox.init();
+    });
+</script>

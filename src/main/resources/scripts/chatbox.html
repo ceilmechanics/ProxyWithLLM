@@ -1,0 +1,382 @@
+<style>
+  .fc-chat-container * {
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .fc-chat-container {
+    all: initial;
+    font-family: system-ui, -apple-system, sans-serif !important;
+    line-height: normal !important;
+  }
+
+  .fc-chat-box {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    width: 800px !important;
+    height: 600px !important;
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    z-index: 999999 !important;
+    transition: height 0.3s ease !important;
+  }
+
+  .fc-chat-box.minimized {
+    height: 56px !important; /* Header height */
+  }
+
+  .fc-chat-box.minimized .fc-nav-section,
+  .fc-chat-box.minimized .fc-suggested-questions,
+  .fc-chat-box.minimized .fc-chat-messages,
+  .fc-chat-box.minimized .fc-input-container {
+    display: none !important;
+  }
+
+  .fc-chat-header {
+    background: #f8f9fa !important;
+    padding: 12px 16px !important;
+    border-bottom: 1px solid #eee !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    cursor: move !important;
+    user-select: none !important;
+  }
+
+  .fc-header-icon {
+    color: #4f46e5 !important;
+    font-size: 20px !important;
+  }
+
+  .fc-header-title {
+    font-size: 18px !important;
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+  }
+
+  .fc-minimize-button {
+    margin-left: auto !important;
+    padding: 4px 8px !important;
+    background: transparent !important;
+    border: none !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    font-size: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s !important;
+  }
+
+  .fc-minimize-button:hover {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+  }
+
+  .fc-nav-section {
+    padding: 12px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #eee !important;
+  }
+
+  .fc-nav-title {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .fc-nav-buttons {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .fc-nav-button {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 12px !important;
+    background: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+    color: #374151 !important;
+    transition: all 0.2s !important;
+  }
+
+  .fc-nav-button:hover {
+    background: #e5e7eb !important;
+  }
+
+  .fc-nav-button.fc-active {
+    background: #4f46e5 !important;
+    color: white !important;
+    border-color: #4f46e5 !important;
+  }
+
+  .fc-suggested-questions {
+    padding: 12px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #eee !important;
+  }
+
+  .fc-question-button {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    background: #f8f9fa !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    margin-bottom: 6px !important;
+    text-align: left !important;
+    font-size: 13px !important;
+  }
+
+  .fc-question-button:hover {
+    background: #f3f4f6 !important;
+  }
+
+  /* Remove any active/focus states */
+  .fc-question-button:active,
+  .fc-question-button:focus {
+    background: #f8f9fa !important;
+    outline: none !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .fc-chat-messages {
+    flex-grow: 1 !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    background: #f9fafb !important;
+  }
+
+  .fc-message {
+    display: flex !important;
+    gap: 8px !important;
+    max-width: 85% !important;
+  }
+
+  .fc-message.fc-user-message {
+    margin-left: auto !important;
+    flex-direction: row-reverse !important;
+  }
+
+  .fc-message-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    background: #4f46e5 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    font-weight: bold !important;
+    flex-shrink: 0 !important;
+    font-size: 12px !important;
+  }
+
+  .fc-user-message .fc-message-avatar {
+    background: #6366f1 !important;
+  }
+
+  .fc-message-content {
+    background: white !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    line-height: 1.4 !important;
+    color: #1f2937 !important;
+    font-size: 13px !important;
+  }
+
+  .fc-user-message .fc-message-content {
+    background: #4f46e5 !important;
+    color: white !important;
+  }
+
+  .fc-input-container {
+    padding: 12px !important;
+    background: white !important;
+    border-top: 1px solid #eee !important;
+  }
+
+  .fc-input-wrapper {
+    display: flex !important;
+    gap: 8px !important;
+    background: #f8f9fa !important;
+    padding: 6px !important;
+    border-radius: 6px !important;
+  }
+
+  .fc-chat-input {
+    flex-grow: 1 !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 8px !important;
+    font-size: 13px !important;
+    outline: none !important;
+    color: #1f2937 !important;
+  }
+
+  .fc-send-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 60px !important;
+    background: #4f46e5 !important;
+    color: white !important;
+    border: none !important;
+    padding: 6px 12px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+  }
+
+  .fc-send-button:hover {
+    background: #4338ca !important;
+  }
+
+  /* Add this to your existing CSS */
+  .fc-loading-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .fc-loading-spinner::after {
+    content: "";
+    width: 30px;
+    height: 30px;
+    border: 3px solid #e5e7eb;
+    border-top: 3px solid #4f46e5;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Add this to hide/show the sections */
+  .fc-suggested-questions.loading {
+    display: none;
+  }
+
+  .fc-loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: white; /* Ensure visible background */
+  }
+
+  .fc-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3; /* Light grey */
+    border-top: 4px solid #4f46e5; /* Blue */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Hide spinner by default */
+  .fc-loading-container {
+    display: none;
+  }
+
+  /* Show spinner when loading */
+  .fc-loading-container.show {
+    display: flex;
+  }
+
+  .fc-typing-indicator {
+    color: #666;
+  }
+
+  .fc-typing-indicator span {
+    animation: typing 1.4s infinite;
+  }
+
+  .fc-typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .fc-typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes typing {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .fc-formatted-response {
+    padding: 10px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    font-family: system-ui, -apple-system, sans-serif !important;
+  }
+
+  .fc-formatted-section {
+    margin-bottom: 15px !important;
+  }
+
+  .fc-formatted-title {
+    color: #4f46e5 !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    margin: 0 0 8px 0 !important;
+    padding: 0 !important;
+  }
+
+  .fc-formatted-list {
+    margin: 0 !important;
+    padding-left: 20px !important;
+    list-style-type: disc !important;
+  }
+
+  .fc-formatted-item {
+    margin-bottom: 5px !important;
+    padding: 0 !important;
+    color: #1f2937 !important;
+    line-height: 1.4 !important;
+  }
+</style>
