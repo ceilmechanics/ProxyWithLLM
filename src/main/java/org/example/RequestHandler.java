@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import com.github.benmanes.caffeine.cache.Cache;
+
 public class RequestHandler extends ChannelInboundHandlerAdapter {
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
     private final String host;
@@ -52,6 +54,42 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    public static String getFirst20Words(String input) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
+
+        String[] words = input.split("\\s+");
+        int wordCount = Math.min(20, words.length);
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < wordCount; i++) {
+            result.append(words[i]);
+            if (i < wordCount - 1) {
+                result.append(" ");
+            }
+        }
+
+        return result.toString();
+    }
+
+    public FullHttpResponse buildClientResponse(String responseBody) {
+        FullHttpResponse clientResponse = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK,
+                Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
+        );
+
+        clientResponse.headers()
+                .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
+                .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
+
+        return clientResponse;
+    }
+
     private void handleLargeLanguageModelRequestWithoutProxyAgent(final ChannelHandlerContext ctx, final FullHttpRequest request) throws IOException {
         if (request.method().equals(HttpMethod.OPTIONS)) {
             FullHttpResponse clientResponse = new DefaultFullHttpResponse(
@@ -68,6 +106,7 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
             return;
         }
 
+
         System.out.println("[requestHandler] processing request " + request.uri());
         String content = request.content().toString(CharsetUtil.UTF_8);
         JSONObject jsonBody = new JSONObject(content);
@@ -75,7 +114,29 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         String userInput = jsonBody.getString("userInput");
         String command = jsonBody.getString("command");
         Integer lastk = jsonBody.getInt("lastk");
+        if (command.equals("suggestedQuestions")) {
+            lastk = 0;
+        }
         String sessionId = jsonBody.getString("sessionId");
+
+//        System.out.println("\n--- command:" + command);
+//        System.out.println("--- query:" + getFirst20Words(query));
+
+        Cache<String, String> cache = CacheManager.getCache();
+
+        if (!command.equals("chat")) {
+            String key = command + getFirst20Words(query);
+            String cachedString = cache.getIfPresent(key);
+            if (cachedString != null) {
+                FullHttpResponse clientResponse = buildClientResponse(cachedString);
+                ctx.channel().writeAndFlush(clientResponse);
+                System.out.println("\n----- found in cache.\n");
+                return;
+            }
+            else {
+                System.out.println("\n--- not found in cache\n");
+            }
+        }
 
         logger.info("\n" +
                         "+-----------------------------------------+\n" +
@@ -157,19 +218,17 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
 //                    JSONObject jsonResponse = new JSONObject(responseBody);
 //                    String result = jsonResponse.getString("result");
 
-                    FullHttpResponse clientResponse = new DefaultFullHttpResponse(
-                            HttpVersion.HTTP_1_1,
-                            HttpResponseStatus.OK,
-                            Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
-                    );
+                    if (!command.equals("chat")) {
+                        String key = command + getFirst20Words(query);
+                        cache.put(key, responseBody);
+                        System.out.println("\n---- put in cache.\n");
+//                        System.out.println("-- key: " + key);
+//                        System.out.println("--- command:" + command);
+//                        System.out.println("--- query:" + getFirst20Words(query));
+//                        System.out.println("\n");
+                    }
 
-                    clientResponse.headers()
-                            .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
-                            .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
-
+                    FullHttpResponse clientResponse = buildClientResponse(responseBody);
                     ctx.channel().writeAndFlush(clientResponse);
                     // If you need to parse JSON:
 

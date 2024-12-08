@@ -26,7 +26,9 @@
         </div>
 
         <div class="fc-suggested-questions">
-            <div class="fc-nav-title">Suggested questions</div>
+            <div class="fc-nav-title">Suggested questions
+                <button id="toggleQuestionsButton" class="toggle-button">Hide</button>
+            </div>
             <div id="fcQuestions">
                 <button
                         class="fc-question-button"
@@ -81,7 +83,8 @@
             this.messageInput = document.getElementById("fcMessageInput");
             this.sendButton = document.getElementById("fcSendButton");
             this.minimizeButton = document.getElementById("fcMinimizeButton");
-            this.questionsContainer = document.getElementById("fcQuestions"); // Add this line
+            this.questionsContainer = document.getElementById("fcQuestions");
+            this.toggleButton = document.getElementById("toggleQuestionsButton");
 
             this.isMinimized = false;
 
@@ -92,6 +95,7 @@
             this.sendMessage = this.sendMessage.bind(this);
             this.addMessage = this.addMessage.bind(this);
             this.toggleMinimize = this.toggleMinimize.bind(this);
+            this.questionsVisible = true;
 
             // Add API endpoint configuration
             this.proxyLLMEndpoint = "https://myproxydummyhost/llmapi";
@@ -462,6 +466,8 @@
                 this.toggleMinimize();
             });
 
+            this.toggleButton.addEventListener("click", this.toggleQuestions.bind(this));
+
             // Navigation buttons
             document
                 .getElementById("fcNavButtons")
@@ -491,6 +497,18 @@
                     await this.sendMessage();
                 }
             });
+        },
+
+        toggleQuestions() {
+            if (this.questionsVisible) {
+                this.questionsContainer.style.display = 'none';
+                this.toggleButton.textContent = "Show";
+            } else {
+                this.questionsContainer.style.display = 'block';
+                this.toggleButton.textContent = "Hide";
+            }
+
+            this.questionsVisible = !this.questionsVisible;
         },
 
         toggleMinimize() {
