@@ -23,11 +23,9 @@ public class Prompt {
     private static final String CONTENTS_PROMPT = """
         Create a table of contents for the web page content. Follow these guidelines strictly:
         1. Based on the following text, create a table of contents with main sections and subsections. 
-        2. Use only bullet points on sections and subsections accordingly.
-        3. Focus only on the core content: the beginning part of the paragraphs, main ideas, important details, and actionable insights.
-        4. Exclude irrelevant content such as advertisements, navigation links, or unrelated information.
-        5. Ensure the questions are clear, engaging, and aligned with the purpose of the web page.
-        6. Each sections and sub-points should be on a new line.
+        2. Focus only on the core content: the beginning part of the paragraphs, main ideas, important details, and actionable insights.
+        3. Exclude irrelevant content such as advertisements, navigation links, or unrelated information.
+        4. Ensure the questions are clear, engaging, and aligned with the purpose of the web page.
         """;
 
     private static final String STUDY_GUIDE_PROMPT = """
@@ -40,17 +38,6 @@ public class Prompt {
         5. Exclude irrelevant content such as advertisements, navigation links, or unrelated information.
         6. Ensure the questions are clear, engaging, and aligned with the purpose of the web page.
         7. Each question should be 1 sentence, and answers should have 2 sentences max.
-        8. Example study guide: 'Questions
-            1	What is color blindness, and what are its primary causes?
-            2	Describe the difference between dichromacy and anomalous trichromacy.
-         Answers
-            1	Color blindness, or color vision deficiency, refers to the decreased ability to perceive colors or 
-            differentiate between them. This condition is primarily caused by genetic variations affecting the 
-            functionality of cone cells in the retina, which are responsible for color vision.
-            2	Dichromacy signifies the complete absence of one type of cone cell, resulting in the perception 
-            of colors using only two primary colors. In contrast, anomalous trichromacy involves the presence of 
-            all three cone types, but one type functions abnormally, leading to altered color perception.'
-        Questions are separated with \\n, please dont provide any other style to the question.
         """;
 
     private static final String SUMMARY_PROMPT = """
@@ -70,5 +57,6 @@ public class Prompt {
             2.	Include relevant details, examples, or explanations as necessary to enhance understanding.
             3.	If there are multiple possible answers, outline the options and explain their differences.
             4.	Keep the response concise (try make it no more than 5 sentences) and focused unless otherwise specified.
+            5.  The answer could go beyond the content provided, please answer it with any knowledge you have.
             """;
 }

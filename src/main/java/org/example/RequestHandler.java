@@ -1,7 +1,6 @@
 package org.example;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
@@ -14,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.http.HttpClient;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -26,8 +24,7 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
     private final boolean isHttps;
     private Channel outboundChannel;
 
-    private final String llmEndpoint = "https://a061igc186.execute-api.us-east-1.amazonaws.com/dev";
-//    private final int llmPort = 443;
+    //    private final int llmPort = 443;
 
     public RequestHandler(String host, int port, boolean isHttps) {
         this.host = host;
@@ -52,6 +49,23 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    private FullHttpResponse buildClientResponse(String responseBody) {
+        FullHttpResponse clientResponse = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK,
+                Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
+        );
+
+        clientResponse.headers()
+                .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
+                .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
+
+        return clientResponse;
+    }
+
     private void handleLargeLanguageModelRequestWithoutProxyAgent(final ChannelHandlerContext ctx, final FullHttpRequest request) throws IOException {
         if (request.method().equals(HttpMethod.OPTIONS)) {
             FullHttpResponse clientResponse = new DefaultFullHttpResponse(
@@ -69,6 +83,7 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         }
 
         System.out.println("[requestHandler] processing request " + request.uri());
+
         String content = request.content().toString(CharsetUtil.UTF_8);
         JSONObject jsonBody = new JSONObject(content);
         String query = jsonBody.getString("query");
@@ -92,9 +107,6 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                 command,
                 lastk,
                 sessionId);
-        System.out.println("[requestHandler] finished request " + request.uri());
-
-        logger.info("LINE 97" + Prompt.getPrompt(command, userInput));
 
         JSONObject requestBody = new JSONObject()
                 .put("model", "4o-mini")
@@ -103,6 +115,13 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                 .put("temperature", 0.7)
                 .put("lastk", lastk)
                 .put("session_id", sessionId);
+
+        String cachedStr = LLMCache.getInstance().getResponse(requestBody);
+        if (cachedStr != null) {
+            FullHttpResponse clientResponse = buildClientResponse(cachedStr);
+            ctx.channel().writeAndFlush(clientResponse);
+            return;
+        }
 
         Properties prop = new Properties();
         String apiKey = "";
@@ -123,6 +142,7 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                 MediaType.parse("application/json")
         );
 
+        String llmEndpoint = "https://a061igc186.execute-api.us-east-1.amazonaws.com/dev";
         Request llmRequest = new Request.Builder()
                 .url(llmEndpoint)  // Changed /post to match your endpoint
                 .addHeader("Content-Type", "application/json")
@@ -154,25 +174,9 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                             "{}", responseBody
                             );
 
-//                    JSONObject jsonResponse = new JSONObject(responseBody);
-//                    String result = jsonResponse.getString("result");
-
-                    FullHttpResponse clientResponse = new DefaultFullHttpResponse(
-                            HttpVersion.HTTP_1_1,
-                            HttpResponseStatus.OK,
-                            Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
-                    );
-
-                    clientResponse.headers()
-                            .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
-                            .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
-
+                    FullHttpResponse clientResponse = buildClientResponse(responseBody);
+                    LLMCache.getInstance().addResponseToCache(requestBody, responseBody);
                     ctx.channel().writeAndFlush(clientResponse);
-                    // If you need to parse JSON:
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -181,141 +185,6 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
             }
         });
     }
-
-
-//    private void handleLargeLanguageModelRequest(final ChannelHandlerContext ctx, final FullHttpRequest request) throws IOException {
-//        if (request.method().equals(HttpMethod.OPTIONS)) {
-//            FullHttpResponse clientResponse = new DefaultFullHttpResponse(
-//                    HttpVersion.HTTP_1_1,
-//                    HttpResponseStatus.NO_CONTENT
-//            );
-//
-//            clientResponse.headers()
-//                    .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-//                    .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
-//                    .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
-//
-//            ctx.channel().writeAndFlush(clientResponse);
-//            return;
-//        }
-//
-////        // Clone and modify the request
-////        logger.info("Original request headers: {}", request.headers());
-////        logger.info("Original request content length: {}", request.content().readableBytes());
-////
-////        final FullHttpRequest modifiedRequest = request.copy();
-////        logger.info("\n" +
-////                "+-----------------------------------------+\n" +
-////                "|   TEXT FED TO LLM                       |\n" +
-////                "+-----------------------------------------+\n");
-////        logger.info(modifiedRequest.toString());
-//
-//        String content = request.content().toString(CharsetUtil.UTF_8);
-////
-////        if (contentBuf.isReadable()) {
-////            logger.info("Content size: {}", contentBuf.readableBytes());
-////            String content = contentBuf.toString(CharsetUtil.UTF_8);
-////            logger.info("Content: {}", content);
-////        } else {
-////            logger.warn("Content buffer is not readable!");
-////        }
-//
-//
-//        JSONObject jsonBody = new JSONObject(content);
-//        String data = jsonBody.getString("data");
-//        logger.info("\n" +
-//                        "+-----------------------------------------+\n" +
-//                        "|   TEXT FED TO LLM                       |\n" +
-//                        "+-----------------------------------------+\n" +
-//                        "{}",
-//                data);
-//
-//
-//
-//        JSONObject requestBody = new JSONObject()
-//                .put("model", "4o-mini")
-//                .put("system", "Answer my question in a funny manner")
-//                .put("query", "Who are the Jumbos")
-//                .put("temperature", 0.0)
-//                .put("lastk", 1)
-//                .put("session_id", "GenericSession");
-//
-//        // Create the HTTP request
-//        FullHttpRequest llmRequest = new DefaultFullHttpRequest(
-//                HttpVersion.HTTP_1_1,
-//                HttpMethod.POST,
-//                "/post",
-//                Unpooled.copiedBuffer(requestBody.toString(), CharsetUtil.UTF_8)
-//        );
-//
-//        Properties prop = new Properties();
-//        String apiKey = "";
-//        try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
-//            prop.load(input);
-//            apiKey = prop.getProperty("api-key");
-//        }
-//
-//        llmRequest.headers()
-////                .set(HttpHeaderNames.HOST, "localhost:5000")
-//                .set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE)
-//                .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
-//                .set(HttpHeaderNames.CONTENT_LENGTH, llmRequest.content().readableBytes())
-//                .set("x-api-key", apiKey);
-//
-//        Bootstrap bootstrap = new Bootstrap();
-//        bootstrap.group(ctx.channel().eventLoop())
-//                .channel(ctx.channel().getClass())
-//                .option(ChannelOption.AUTO_READ, true)
-//                .option(ChannelOption.SO_KEEPALIVE, true)
-//                .handler(new ChannelInitializer<Channel>() {
-//                    @Override
-//                    protected void initChannel(Channel ch) throws Exception {
-//                        ch.pipeline().addLast(new HttpClientCodec());
-//                        ch.pipeline().addLast(new HttpObjectAggregator(10 * 1024 * 1024));
-//                        ch.pipeline().addLast(new SimpleChannelInboundHandler<FullHttpResponse>() {
-//
-//                            @Override
-//                            protected void channelRead0(ChannelHandlerContext ctx0, FullHttpResponse llmResponse) throws Exception {
-//                                String content = llmResponse.content().toString(CharsetUtil.UTF_8);
-//                                FullHttpResponse clientResponse = new DefaultFullHttpResponse(
-//                                        HttpVersion.HTTP_1_1,
-//                                        HttpResponseStatus.OK,
-//                                        Unpooled.copiedBuffer(content, CharsetUtil.UTF_8)
-//                                );
-//
-//                                clientResponse.headers()
-//                                        .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
-//                                        .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
-//                                        .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-//                                        .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
-//                                        .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
-//
-//                                ctx.channel().writeAndFlush(clientResponse);
-//                            }
-//                        });
-//                    }
-//                });
-//
-//        ChannelFuture cf = bootstrap.connect(llmHost, llmPort);
-//        cf.addListener((ChannelFutureListener) future -> {
-//            if (future.isSuccess()) {
-//                outboundChannel = future.channel();
-//                System.out.println("Proxy as a client >>>> Connected to " + llmHost + ":" + llmPort);
-//
-//                logger.info("Proxy, as a client, is connected to {}:{}", llmHost, llmPort);
-//                logger.info("\n" +
-//                                "+-----------------------------------------+\n" +
-//                                "|   sending LLM Request                   |\n" +
-//                                "+-----------------------------------------+\n" +
-//                                "{}",
-//                        llmRequest);
-//                future.channel().writeAndFlush(llmRequest);
-//            } else {
-//                System.err.println(" Proxy as a client >>>> Failed to connect to " + llmHost + ":" + llmPort);
-//                ctx.close();
-//            }
-//        });
-//    }
 
     private void handleHttpRequest(final ChannelHandlerContext ctx, final FullHttpRequest request) {
         // Clone and modify the request

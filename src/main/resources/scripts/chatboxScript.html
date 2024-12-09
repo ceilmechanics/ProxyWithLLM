@@ -27,7 +27,7 @@
 
         <div class="fc-suggested-questions">
             <div class="fc-nav-title">Suggested questions
-                <button id="toggleQuestionsButton" class="toggle-button">Hide</button>
+                <button id="toggleQuestionsButton" class="fc-chat-box-toggle-button">Hide</button>
             </div>
             <div id="fcQuestions">
                 <button
@@ -74,6 +74,7 @@
     </div>
 </div>
 
+
 <script>
     const FloatingChatbox = {
         init() {
@@ -100,7 +101,7 @@
             // Add API endpoint configuration
             this.proxyLLMEndpoint = "https://myproxydummyhost/llmapi";
             this.sessionId = this.generateSessionId();
-            this.lastk = 1;
+            this.lastk = 0;
 
             this.loadInitialSuggestedQuestions();
 
@@ -131,7 +132,7 @@
                     query: this.extractTextFromTags(),
                     userInput: "",
                     sessionId: this.sessionId,
-                    lastk: this.lastk++,
+                    lastk: 0,
                     command: "suggestedQuestions",
                 });
 
@@ -537,7 +538,7 @@
                     query: this.extractTextFromTags(),
                     userInput: "",
                     sessionId: this.sessionId,
-                    lastk: this.lastk++,
+                    lastk: 0,
                     command: button.dataset.section.replace("-", " "),
                 });
 
@@ -554,105 +555,6 @@
                     false
                 );
             }
-        },
-
-        markdownToHtml(markdown) {
-            if (!markdown) return "";
-
-            let html = markdown;
-
-            // Store code blocks temporarily
-            const codeBlocks = [];
-            html = html.replace(/```[\s\S]*?```/g, (match) => {
-                codeBlocks.push(match);
-                return `{{CODE_BLOCK_${codeBlocks.length - 1}}}`;
-            });
-
-            // Headers
-            html = html.replace(
-                /^(#{1,6})\s+(.+)$/gm,
-                (match, hashes, content) =>
-                    `<h${hashes.length}>${content.trim()}</h${hashes.length}>`
-            );
-
-            // Bold and italic
-            html = html.replace(
-                /\*\*\*(.*?)\*\*\*/g,
-                "<strong><em>$1</em></strong>"
-            );
-            html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-            html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-
-            // Lists - Fixed to only match proper list items
-            html = html.replace(
-                /^[ \t]*[-*+][ \t]+[^\n]+(?:\n(?![ \t]*[-*+][ \t]|[ \t]*\d+\.[ \t]|\n)[^\n]+)*(?:\n|$)(?:[ \t]*[-*+][ \t]+[^\n]+(?:\n(?![ \t]*[-*+][ \t]|[ \t]*\d+\.[ \t]|\n)[^\n]+)*(?:\n|$))*/gm,
-                (match) => {
-                    const items = match
-                        .trim()
-                        .split(/^[ \t]*[-*+][ \t]+/m)
-                        .filter(Boolean);
-                    return (
-                        "\n<ul>\n" +
-                        items.map((item) => `  <li>${item.trim()}</li>`).join("\n") +
-                        "\n</ul>\n"
-                    );
-                }
-            );
-
-            html = html.replace(
-                /^[ \t]*\d+\.[ \t]+[^\n]+(?:\n(?![ \t]*\d+\.[ \t]|[ \t]*[-*+][ \t]|\n)[^\n]+)*(?:\n|$)(?:[ \t]*\d+\.[ \t]+[^\n]+(?:\n(?![ \t]*\d+\.[ \t]|[ \t]*[-*+][ \t]|\n)[^\n]+)*(?:\n|$))*/gm,
-                (match) => {
-                    const items = match
-                        .trim()
-                        .split(/^[ \t]*\d+\.[ \t]+/m)
-                        .filter(Boolean);
-                    return (
-                        "\n<ol>\n" +
-                        items.map((item) => `  <li>${item.trim()}</li>`).join("\n") +
-                        "\n</ol>\n"
-                    );
-                }
-            );
-
-            // Links
-            html = html.replace(
-                /\[([^\]]+)\]\(([^)]+)\)/g,
-                '<a href="$2">$1</a>'
-            );
-
-            // Code inline
-            html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-
-            // Blockquotes
-            html = html.replace(/^>\s+(.+)$/gm, "<blockquote>$1</blockquote>");
-
-            // Paragraphs
-            html = html.replace(/^(?!<[a-z])[^\n].+$/gm, (match) => {
-                if (!match.startsWith("<")) {
-                    return `<p>${match}</p>`;
-                }
-                return match;
-            });
-
-            // Restore code blocks
-            codeBlocks.forEach((block, index) => {
-                const code = block.replace(
-                    /```(\w+)?\n([\s\S]*?)```/,
-                    (match, lang, content) => {
-                        const language = lang ? ` class="language-${lang}"` : "";
-                        return `<pre><code${language}>${content
-                            .trim()
-                            .replace(/&/g, "&amp;")
-                            .replace(/</g, "&lt;")
-                            .replace(/>/g, "&gt;")
-                            .replace(/"/g, "&quot;")
-                            .replace(/'/g, "&#039;")}</code></pre>`;
-                    }
-                );
-                html = html.replace(`{{CODE_BLOCK_${index}}}`, code);
-            });
-
-            return html.trim();
         },
 
         async handleSuggestedQuestion(button) {
@@ -700,7 +602,7 @@
                         query: this.extractTextFromTags(),
                         userInput: message,
                         sessionId: "GenericSession",
-                        lastk: 1,
+                        lastk: this.lastk++,
                         command: "chat",
                     });
 
@@ -739,7 +641,13 @@
             } else {
                 // Format response if it's from assistant and contains markdown-style formatting
                 if (!isUser && message.includes("**")) {
-                    content.innerHTML = this.markdownToHtml(message);
+                    content.innerHTML = marked.parse(message, {
+                            breaks: true,        // Enable line breaks
+                            gfm: true,          // GitHub Flavored Markdown
+                            sanitize: false,    // Allow HTML
+                            smartLists: true,   // Better list handling
+                            xhtml: true         // XHTML compliance
+                    });
                 } else {
                     content.textContent = message;
                 }
