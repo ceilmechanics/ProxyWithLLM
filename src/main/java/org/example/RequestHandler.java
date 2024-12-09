@@ -174,25 +174,9 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                             "{}", responseBody
                             );
 
-
                     FullHttpResponse clientResponse = buildClientResponse(responseBody);
                     LLMCache.getInstance().addResponseToCache(requestBody, responseBody);
-
-//                    FullHttpResponse clientResponse = new DefaultFullHttpResponse(
-//                            HttpVersion.HTTP_1_1,
-//                            HttpResponseStatus.OK,
-//                            Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
-//                    );
-//
-//                    clientResponse.headers()
-//                            .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
-//                            .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
-//                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-//                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
-//                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
-
                     ctx.channel().writeAndFlush(clientResponse);
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
