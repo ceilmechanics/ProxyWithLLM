@@ -49,6 +49,23 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    private FullHttpResponse buildClientResponse(String responseBody) {
+        FullHttpResponse clientResponse = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK,
+                Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
+        );
+
+        clientResponse.headers()
+                .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
+                .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
+
+        return clientResponse;
+    }
+
     private void handleLargeLanguageModelRequestWithoutProxyAgent(final ChannelHandlerContext ctx, final FullHttpRequest request) throws IOException {
         if (request.method().equals(HttpMethod.OPTIONS)) {
             FullHttpResponse clientResponse = new DefaultFullHttpResponse(
@@ -75,6 +92,23 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         Integer lastk = jsonBody.getInt("lastk");
         String sessionId = jsonBody.getString("sessionId");
 
+        JSONObject requestBody = new JSONObject()
+                .put("model", "4o-mini")
+                .put("system", Prompt.getPrompt(command, userInput))
+                .put("query", query)
+                .put("temperature", 0.7)
+                .put("lastk", lastk)
+                .put("session_id", sessionId);
+
+        LLMCache cacheInstance = LLMCache.getInstance();
+        String result = cacheInstance.getResponse(requestBody);
+
+        if (result != null) {
+            FullHttpResponse clientResponse = buildClientResponse(result);
+            ctx.channel().writeAndFlush(clientResponse);
+            return;
+        }
+
         logger.info("\n" +
                         "+-----------------------------------------+\n" +
                         "|            Contents FED TO LLM          |\n" +
@@ -92,14 +126,6 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                 sessionId);
 
         System.out.println("[requestHandler] finished request " + request.uri());
-
-        JSONObject requestBody = new JSONObject()
-                .put("model", "4o-mini")
-                .put("system", Prompt.getPrompt(command, userInput))
-                .put("query", query)
-                .put("temperature", 0.7)
-                .put("lastk", lastk)
-                .put("session_id", sessionId);
 
         Properties prop = new Properties();
         String apiKey = "";
@@ -152,22 +178,9 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                             "{}", responseBody
                             );
 
-
-                    FullHttpResponse clientResponse = new DefaultFullHttpResponse(
-                            HttpVersion.HTTP_1_1,
-                            HttpResponseStatus.OK,
-                            Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
-                    );
-
-                    clientResponse.headers()
-                            .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
-                            .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
-
+                    FullHttpResponse clientResponse = buildClientResponse(responseBody);
+                    cacheInstance.addResponseToCache(requestBody, responseBody);
                     ctx.channel().writeAndFlush(clientResponse);
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
