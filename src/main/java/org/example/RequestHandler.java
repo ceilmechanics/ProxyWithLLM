@@ -49,6 +49,23 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
+    private FullHttpResponse buildClientResponse(String responseBody) {
+        FullHttpResponse clientResponse = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK,
+                Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
+        );
+
+        clientResponse.headers()
+                .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
+                .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
+                .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
+
+        return clientResponse;
+    }
+
     private void handleLargeLanguageModelRequestWithoutProxyAgent(final ChannelHandlerContext ctx, final FullHttpRequest request) throws IOException {
         if (request.method().equals(HttpMethod.OPTIONS)) {
             FullHttpResponse clientResponse = new DefaultFullHttpResponse(
@@ -91,8 +108,6 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                 lastk,
                 sessionId);
 
-        System.out.println("[requestHandler] finished request " + request.uri());
-
         JSONObject requestBody = new JSONObject()
                 .put("model", "4o-mini")
                 .put("system", Prompt.getPrompt(command, userInput))
@@ -100,6 +115,13 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                 .put("temperature", 0.7)
                 .put("lastk", lastk)
                 .put("session_id", sessionId);
+
+        String cachedStr = LLMCache.getInstance().getResponse(requestBody);
+        if (cachedStr != null) {
+            FullHttpResponse clientResponse = buildClientResponse(cachedStr);
+            ctx.channel().writeAndFlush(clientResponse);
+            return;
+        }
 
         Properties prop = new Properties();
         String apiKey = "";
@@ -153,18 +175,21 @@ public class RequestHandler extends ChannelInboundHandlerAdapter {
                             );
 
 
-                    FullHttpResponse clientResponse = new DefaultFullHttpResponse(
-                            HttpVersion.HTTP_1_1,
-                            HttpResponseStatus.OK,
-                            Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
-                    );
+                    FullHttpResponse clientResponse = buildClientResponse(responseBody);
+                    LLMCache.getInstance().addResponseToCache(requestBody, responseBody);
 
-                    clientResponse.headers()
-                            .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
-                            .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
-                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
+//                    FullHttpResponse clientResponse = new DefaultFullHttpResponse(
+//                            HttpVersion.HTTP_1_1,
+//                            HttpResponseStatus.OK,
+//                            Unpooled.copiedBuffer(responseBody, CharsetUtil.UTF_8)
+//                    );
+//
+//                    clientResponse.headers()
+//                            .set(HttpHeaderNames.CONTENT_TYPE, "application/json")
+//                            .set(HttpHeaderNames.CONTENT_LENGTH, clientResponse.content().readableBytes())
+//                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+//                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS, "POST, GET, OPTIONS")
+//                            .set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "Content-Type");
 
                     ctx.channel().writeAndFlush(clientResponse);
 

@@ -9,36 +9,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class LLMCache {
-    private static LLMCache LLMCache;
+    private static LLMCache _LLMCache;
 
-    // Loading cache with automatic value computation
-    private final Cache<Integer, FullHttpResponse> cache;
+    private static final Cache<Integer, String> cache = Caffeine.newBuilder()
+            .maximumSize(100)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .recordStats()
+            .build();
 
-    private LLMCache() {
-        cache = Caffeine.newBuilder()
-                .maximumSize(100)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                .recordStats()   // Add this line
-                .build();
-    }
+    private LLMCache() {}
 
     public static LLMCache getInstance() {
-        if (LLMCache == null) {
-            LLMCache = new LLMCache();
-            System.out.println(">>>>>>>>>>> first time calling cache");
+        if (_LLMCache == null) {
+            _LLMCache = new LLMCache();
         }
-        return LLMCache;
+        return _LLMCache;
     }
 
-    public FullHttpResponse getResponse(final JSONObject requestBody) {
-        FullHttpResponse response = cache.getIfPresent(generateHashCode(requestBody));
-        System.out.println("Found in cache: " + (response != null));
-        System.out.println("Cache size: " + cache.estimatedSize());
-
-        return response;
+    public String getResponse(final JSONObject requestBody) {
+        return cache.getIfPresent(generateHashCode(requestBody));
     }
 
-    public void addResponseToCache(final JSONObject requestBody, FullHttpResponse response) {
+    public void addResponseToCache(final JSONObject requestBody, String response) {
         cache.put(generateHashCode(requestBody), response);
     }
 
